@@ -1,0 +1,71 @@
+<div class="page-enter">
+
+  <div class="module-header">
+    <div>
+      <h2 class="section-title">M3. Políticas y Segmentación</h2>
+      <p class="section-subtitle">Definición de estrategias de cobro por segmento y cumplimiento normativo.</p>
+    </div>
+    <button class="btn-primary">
+      <span>+</span> Nueva Política
+    </button>
+  </div>
+
+  <!-- Policy Cards -->
+  <div class="grid-2 mb-6">
+    @for (policy of store.policies(); track policy.id) {
+      <div class="policy-card">
+        <div class="policy-header">
+          <div class="policy-dot" [style.background]="policy.color"></div>
+          <div class="policy-info">
+            <h4 class="policy-name">{{ policy.name }}</h4>
+            <p class="policy-criteria">{{ policy.criteria }}</p>
+          </div>
+          <span class="badge" [class]="intensityColors[policy.intensity]">
+            {{ policy.intensity }}
+          </span>
+        </div>
+
+        <div class="policy-stats">
+          <div class="pstat">
+            <span class="pstat-value">{{ associatesInSegment(policy.name) }}</span>
+            <span class="pstat-label">Asociados</span>
+          </div>
+          <div class="pstat-divider"></div>
+          <div class="pstat">
+            <span class="pstat-value">{{ policy.id }}</span>
+            <span class="pstat-label">ID Segmento</span>
+          </div>
+        </div>
+
+        <div class="policy-actions">
+          <button class="btn-secondary btn-sm">Editar</button>
+          <button class="btn-accent btn-sm">Ver Asociados →</button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Channels Compliance -->
+  <div class="card">
+    <h4 class="card-title mb-6">📋 Canales de Contacto — Ley 2300</h4>
+    <div class="channels-grid">
+      @for (ch of contactChannels; track ch.label) {
+        <div class="channel-card" [class.allowed]="ch.allowed" [class.blocked]="!ch.allowed">
+          <div class="channel-icon">{{ ch.icon }}</div>
+          <div class="channel-info">
+            <p class="channel-name">{{ ch.label }}</p>
+            <p class="channel-detail">{{ ch.detail }}</p>
+          </div>
+          <span class="channel-status">
+            {{ ch.allowed ? '✓' : '✕' }}
+          </span>
+        </div>
+      }
+    </div>
+    <div class="compliance-footer">
+      <span>⏰</span>
+      <span>Horario permitido: <strong>Lunes a Viernes, 7:00 AM – 7:00 PM</strong>. Sábados: 9:00 AM – 1:00 PM. Ninguna comunicación fuera de horario.</span>
+    </div>
+  </div>
+
+</div>

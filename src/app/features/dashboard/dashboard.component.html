@@ -1,0 +1,140 @@
+<div class="page-enter">
+
+  <!-- ── KPI Cards ── -->
+  <div class="grid-4">
+    @for (stat of stats; track stat.label) {
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon">{{ stat.icon }}</div>
+          <span class="badge" [class]="stat.positive ? 'badge-success' : 'badge-danger'">
+            {{ stat.change }}
+          </span>
+        </div>
+        <div>
+          <p class="stat-label">{{ stat.label }}</p>
+          <h3 class="stat-value">{{ stat.value }}</h3>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Row 2 ── -->
+  <div class="dash-grid">
+
+    <!-- Agent Workload -->
+    <div class="card col-2">
+      <div class="card-header">
+        <h3 class="card-title">Carga de Trabajo por Agente</h3>
+        <div class="live-badge">
+          <span class="pulse-dot"></span>
+          <span>En Vivo</span>
+        </div>
+      </div>
+
+      <div class="agent-list">
+        @for (agent of store.agentLoad(); track agent.name) {
+          <div class="agent-row">
+            <div class="agent-left">
+              <div class="agent-avatar">{{ agent.name.split(' ')[1] }}</div>
+              <span class="agent-name">{{ agent.name }}</span>
+            </div>
+            <div class="agent-right">
+              <span class="agent-cases">{{ agent.count }} casos</span>
+              <span class="agent-pct">{{ agent.percentage.toFixed(1) }}%</span>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" [style.width.%]="agent.percentage"></div>
+          </div>
+        }
+      </div>
+
+      <div class="card-footer">
+        <p class="footer-note">El nivelador distribuye automáticamente los casos críticos y de alto monto.</p>
+        <a routerLink="/configuracion" class="footer-link">Configurar Reglas →</a>
+      </div>
+    </div>
+
+    <!-- Compliance Card -->
+    <div class="card compliance-card gradient-brand">
+      <div>
+        <h3 class="compliance-title">Cumplimiento Ley 2300</h3>
+        <p class="compliance-desc">
+          Todas las estrategias de contacto están parametrizadas bajo la normativa
+          "Dejen de Fregar", respetando horarios y canales autorizados.
+        </p>
+      </div>
+      <div class="compliance-info">
+        <div class="compliance-row">
+          <span>Horarios Habilitados</span>
+          <strong>L-V 7am – 7pm</strong>
+        </div>
+        <div class="progress-bar" style="background: rgba(255,255,255,0.1)">
+          <div class="progress-bar-fill" style="width: 100%;"></div>
+        </div>
+        <p class="compliance-note">* Auditoría inalterable activa para cada interacción.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Row 3: Top Cases + Activity Log ── -->
+  <div class="grid-2">
+
+    <!-- Top Cases Quick View -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Casos Prioritarios</h3>
+        <a routerLink="/gestion-casos" class="footer-link">Ver todos →</a>
+      </div>
+      <div class="case-list">
+        @for (case_ of store.cases().slice(0, 4); track case_.id) {
+          @let assoc = store.getAssociate(case_.associateId);
+          @if (assoc) {
+            <div class="case-row">
+              <div class="case-info">
+                <span class="case-name">{{ assoc.name }}</span>
+                <span class="case-doc">{{ assoc.document }}</span>
+              </div>
+              <div class="case-meta">
+                <span class="case-balance">${{ assoc.balance.toLocaleString() }}</span>
+                <span
+                  class="badge"
+                  [class]="assoc.risk === 'Crítico' ? 'badge-danger' : assoc.risk === 'Alto' ? 'badge-warning' : 'badge-success'"
+                >
+                  {{ assoc.risk }}
+                </span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Actividad Reciente</h3>
+      </div>
+      <div class="activity-log">
+        @for (log of activityLog; track log.time; let last = $last) {
+          <div class="log-row">
+            <div class="log-dot-wrap">
+              <div class="log-dot"></div>
+              @if (!last) { <div class="log-line"></div> }
+            </div>
+            <div class="log-body">
+              <p class="log-action">
+                <strong>{{ log.user }}</strong> {{ log.action }}
+              </p>
+              <p class="log-target">Asociado: {{ log.target }}</p>
+            </div>
+            <span class="log-time">{{ log.time }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+</div>

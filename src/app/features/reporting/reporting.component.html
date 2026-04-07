@@ -1,0 +1,143 @@
+<div class="page-enter">
+
+  <div class="module-header">
+    <div>
+      <h2 class="section-title">M7. Reporting y Auditoría</h2>
+      <p class="section-subtitle">Reportes regulatorios, de desempeño y cumplimiento normativo.</p>
+    </div>
+    <button class="btn-primary">⬇ Exportar Informe</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn" [class.active]="activeTab() === 'operative'"   (click)="activeTab.set('operative')">📋 Operativo</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'compliance'"  (click)="activeTab.set('compliance')">⚖️ Cumplimiento</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'performance'" (click)="activeTab.set('performance')">🏆 Desempeño</button>
+  </div>
+
+  <!-- Operative Tab -->
+  @if (activeTab() === 'operative') {
+    <div class="tab-content page-enter">
+
+      <!-- KPI Row -->
+      <div class="grid-4 mb-6">
+        @for (kpi of [
+          { label: 'Cartera Gestionada', value: '$1.2B',  note: 'Total mes' },
+          { label: 'Tasa Recuperación',  value: '78.5%',  note: '+5.2% vs mes anterior' },
+          { label: 'Contactos Exitosos', value: '4,820',  note: 'Última semana' },
+          { label: 'Acuerdos Cerrados',  value: '284',    note: 'Mes actual' }
+        ]; track kpi.label) {
+          <div class="stat-card">
+            <p class="kpi-note">{{ kpi.note }}</p>
+            <h3 class="kpi-value">{{ kpi.value }}</h3>
+            <p class="kpi-label">{{ kpi.label }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- Reports List -->
+      <div class="card">
+        <h4 class="card-title mb-4">Informes Generados</h4>
+        @for (r of reports; track r.id) {
+          <div class="report-row">
+            <div class="report-icon">📄</div>
+            <div class="report-info">
+              <p class="report-title">{{ r.title }}</p>
+              <p class="report-meta">{{ r.date }} · {{ r.size }}</p>
+            </div>
+            <span class="badge" [class]="r.type === 'PDF' ? 'badge-danger' : 'badge-success'">{{ r.type }}</span>
+            <button class="btn-secondary btn-sm">⬇ Descargar</button>
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+
+  <!-- Compliance Tab -->
+  @if (activeTab() === 'compliance') {
+    <div class="tab-content page-enter">
+      <div class="grid-2">
+        <div class="card">
+          <h4 class="card-title mb-6">✅ Indicadores Ley 2300</h4>
+          @for (m of complianceMetrics; track m.label) {
+            <div class="compliance-row">
+              <div class="comp-left">
+                <span class="comp-icon">{{ m.status === 'ok' ? '✓' : '⚠' }}</span>
+                <span class="comp-label">{{ m.label }}</span>
+              </div>
+              <div class="comp-right">
+                <span class="comp-val" [class.warn]="m.status === 'warning'">{{ m.value }}%</span>
+              </div>
+            </div>
+            <div class="progress-bar mb-3">
+              <div
+                class="progress-bar-fill"
+                [style.width.%]="m.value"
+                [style.background]="m.status === 'ok' ? '#10b981' : '#f59e0b'"
+              ></div>
+            </div>
+          }
+        </div>
+
+        <div class="card gradient-brand" style="color: white">
+          <h4 style="font-size: 1rem; font-weight: 800; margin-bottom: 1rem;">📜 Cumplimiento Global</h4>
+          <div class="compliance-score">
+            <span class="score-big">99.3%</span>
+            <span class="score-label">Índice de Cumplimiento</span>
+          </div>
+          <p style="font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 1rem; line-height: 1.5;">
+            Todas las interacciones son almacenadas en una bitácora inmutable con marca de tiempo y agente responsable, disponible para auditorías regulatorias.
+          </p>
+          <button class="btn-secondary btn-sm" style="margin-top: 1.5rem; background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3);">
+            Ver Bitácora Completa →
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Performance Tab -->
+  @if (activeTab() === 'performance') {
+    <div class="tab-content page-enter">
+      <div class="card">
+        <h4 class="card-title mb-6">🏆 Desempeño por Agente</h4>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Agente</th>
+              <th>Casos Asignados</th>
+              <th>Recuperados</th>
+              <th>Tasa Éxito</th>
+              <th>Promedio Días</th>
+              <th>Rendimiento</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of agentPerf; track a.agent) {
+              <tr>
+                <td><strong>{{ a.agent }}</strong></td>
+                <td>{{ a.cases }}</td>
+                <td>{{ a.recovered }}</td>
+                <td>
+                  <span class="badge" [class]="a.rate >= 80 ? 'badge-success' : a.rate >= 70 ? 'badge-warning' : 'badge-danger'">
+                    {{ a.rate }}%
+                  </span>
+                </td>
+                <td>{{ a.avg }} días</td>
+                <td>
+                  <div class="score-cell">
+                    <div class="progress-bar" style="width: 80px">
+                      <div class="progress-bar-fill" [style.width.%]="a.rate"></div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+</div>

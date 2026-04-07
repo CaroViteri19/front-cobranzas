@@ -1,0 +1,171 @@
+.module-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.mb-6 { margin-bottom: 1.5rem; }
+.card-title { font-size: 1rem; font-weight: 700; color: var(--brand-primary); }
+.btn-sm { padding: 6px 14px !important; font-size: 0.75rem !important; }
+
+.kpi-badge-row { display: flex; justify-content: flex-end; }
+.kpi-label { font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 8px; }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--brand-primary); }
+
+/* Layout */
+.recaudo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) { .recaudo-grid { grid-template-columns: 1fr; } }
+
+/* Bar Chart */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 200px;
+  padding-bottom: 4px;
+}
+
+.barchart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  gap: 6px;
+}
+
+.barchart-bars {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+}
+
+.target-bar {
+  width: 40%;
+  background: #e2e8f0;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s;
+}
+
+.collected-bar {
+  width: 40%;
+  background: var(--brand-accent);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s;
+}
+
+.barchart-label { text-align: center; }
+.bar-month { display: block; font-size: 0.65rem; color: #94a3b8; }
+.bar-val   { display: block; font-size: 0.65rem; font-weight: 700; color: var(--brand-primary); }
+
+.chart-legend {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #64748b; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Payment Queue */
+.payment-queue { display: flex; flex-direction: column; gap: 12px; }
+
+.payment-card {
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--brand-bg);
+  transition: border-color 0.2s;
+}
+
+.payment-card.urgent {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.payment-top { display: flex; align-items: center; gap: 10px; }
+
+.payment-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.payment-icon.urgent-icon { background: #fff7ed; }
+
+.payment-info { flex: 1; }
+.payment-id   { font-size: 0.75rem; color: #94a3b8; }
+.payment-name { font-size: 0.875rem; font-weight: 700; color: var(--brand-primary); }
+
+.payment-due { font-size: 0.75rem; color: #64748b; }
+.payment-due.urgent-due { color: #ea580c; font-weight: 700; }
+
+.payment-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--brand-secondary);
+}
+
+.payment-installments { font-size: 0.75rem; color: #94a3b8; font-weight: 400; }
+
+.payment-actions { display: flex; gap: 8px; }
+
+.confirmed-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #10b981;
+  background: #f0fdf4;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+/* Funnel */
+.funnel { display: flex; flex-direction: column; gap: 12px; }
+
+.funnel-step { display: flex; align-items: center; gap: 16px; }
+
+.funnel-bar-wrap {
+  flex: 1;
+  height: 32px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.funnel-bar {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.6s ease;
+}
+
+.funnel-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 240px;
+}
+
+.funnel-label { font-size: 0.8rem; font-weight: 600; color: #475569; flex: 1; }
+.funnel-value { font-size: 0.85rem; font-weight: 700; color: var(--brand-primary); }
+.funnel-pct   { font-size: 0.75rem; color: #94a3b8; min-width: 40px; text-align: right; }

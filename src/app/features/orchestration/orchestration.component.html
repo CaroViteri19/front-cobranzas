@@ -1,0 +1,116 @@
+<div class="page-enter">
+
+  <div class="module-header">
+    <div>
+      <h2 class="section-title">M4. Orquestación Multicanal</h2>
+      <p class="section-subtitle">Gestión de campañas de contacto por segmento y canal.</p>
+    </div>
+    <button class="btn-primary" (click)="showNewCampaign.set(!showNewCampaign())">
+      <span>+</span> Nueva Campaña
+    </button>
+  </div>
+
+  <!-- New Campaign Form -->
+  @if (showNewCampaign()) {
+    <div class="card new-campaign-form">
+      <h4 class="card-title mb-4">Crear Nueva Campaña</h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nombre de Campaña</label>
+          <input type="text" class="form-input" [(ngModel)]="newName" placeholder="Ej: Recordatorio Preventivo Q2" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Segmento</label>
+          <select class="form-select" [(ngModel)]="newSegment">
+            <option>Preventiva</option>
+            <option>Administrativa</option>
+            <option>Temprana</option>
+            <option>Prejurídica</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Canal Principal</label>
+          <select class="form-select" [(ngModel)]="newChannel">
+            <option>WhatsApp</option>
+            <option>SMS</option>
+            <option>Email</option>
+            <option>Voz</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-secondary" (click)="showNewCampaign.set(false)">Cancelar</button>
+        <button class="btn-accent" (click)="createCampaign()">Crear Campaña</button>
+      </div>
+    </div>
+  }
+
+  <!-- Campaigns -->
+  <div class="campaigns-grid">
+    @for (c of store.campaigns(); track c.id) {
+      <div class="campaign-card">
+        <div class="camp-header">
+          <div class="camp-channel-icon">{{ channelIcons[c.channel] }}</div>
+          <div class="camp-info">
+            <h4 class="camp-name">{{ c.name }}</h4>
+            <p class="camp-segment">Segmento: {{ c.segment }}</p>
+          </div>
+          <span class="badge" [class]="statusColors[c.status]">{{ c.status }}</span>
+        </div>
+
+        <div class="camp-progress">
+          <div class="camp-progress-header">
+            <span class="camp-channel">{{ c.channel }}</span>
+            <span class="camp-pct">{{ c.progress }}%</span>
+          </div>
+          <div class="progress-bar" style="height: 8px;">
+            <div class="progress-bar-fill" [style.width.%]="c.progress"></div>
+          </div>
+        </div>
+
+        @if (c.status !== 'Completada') {
+          <div class="camp-actions">
+            @if (c.status === 'En curso') {
+              <button class="btn-secondary btn-sm">⏸ Pausar</button>
+            } @else {
+              <button class="btn-accent btn-sm">▶ Reanudar</button>
+            }
+            <button class="btn-primary btn-sm">📊 Ver Métricas</button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Channel Stats -->
+  <div class="card">
+    <h4 class="card-title mb-6">📡 Efectividad por Canal</h4>
+    <div class="channel-stats">
+      @for (item of [
+        { channel: 'WhatsApp', icon: '💬', open: 94, response: 48, color: '#25d366' },
+        { channel: 'SMS',      icon: '📱', open: 78, response: 22, color: '#0ea5e9' },
+        { channel: 'Email',    icon: '✉️', open: 45, response: 12, color: '#6366f1' },
+        { channel: 'Voz',      icon: '📞', open: 62, response: 35, color: '#f59e0b' }
+      ]; track item.channel) {
+        <div class="ch-stat">
+          <div class="ch-icon">{{ item.icon }}</div>
+          <div class="ch-name">{{ item.channel }}</div>
+          <div class="ch-metrics">
+            <div class="ch-metric">
+              <span class="ch-val">{{ item.open }}%</span>
+              <span class="ch-lbl">Apertura</span>
+            </div>
+            <div class="ch-metric">
+              <span class="ch-val">{{ item.response }}%</span>
+              <span class="ch-lbl">Respuesta</span>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" [style.width.%]="item.open" [style.background]="item.color"></div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+</div>

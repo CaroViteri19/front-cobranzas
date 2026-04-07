@@ -1,0 +1,130 @@
+<div class="page-enter">
+
+  <div class="module-header">
+    <div>
+      <h2 class="section-title">M6. Módulo de Recaudo</h2>
+      <p class="section-subtitle">Control de pagos, acuerdos y metas de recuperación.</p>
+    </div>
+    <button class="btn-primary">📥 Registrar Pago Manual</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid-4 mb-6">
+    @for (kpi of kpis; track kpi.label) {
+      <div class="stat-card">
+        <div class="kpi-badge-row">
+          <span class="badge" [class]="kpi.positive ? 'badge-success' : 'badge-danger'">{{ kpi.change }}</span>
+        </div>
+        <div>
+          <p class="kpi-label">{{ kpi.label }}</p>
+          <h3 class="kpi-value">{{ kpi.value }}</h3>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="recaudo-grid mb-6">
+
+    <!-- Bar Chart -->
+    <div class="card">
+      <h4 class="card-title mb-6">📊 Recaudo Mensual vs Meta (MM COP)</h4>
+      <div class="bar-chart">
+        @for (point of monthlyData; track point.month) {
+          <div class="barchart-col">
+            <div class="barchart-bars">
+              <!-- Target line -->
+              <div
+                class="target-bar"
+                [style.height.%]="(point.target / maxCollected()) * 100"
+                [title]="'Meta: $' + point.target + 'M'"
+              ></div>
+              <!-- Collected bar -->
+              <div
+                class="collected-bar"
+                [style.height.%]="(point.collected / maxCollected()) * 100"
+                [title]="'Recaudo: $' + point.collected + 'M'"
+              ></div>
+            </div>
+            <div class="barchart-label">
+              <span class="bar-month">{{ point.month }}</span>
+              <span class="bar-val">${{ point.collected }}M</span>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background: var(--brand-accent)"></div>
+          <span>Recaudo Real</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #cbd5e1"></div>
+          <span>Meta</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Queue -->
+    <div class="card">
+      <h4 class="card-title mb-6">⏰ Acuerdos Próximos a Vencer</h4>
+      <div class="payment-queue">
+        @for (p of paymentQueue; track p.id) {
+          <div class="payment-card" [class.urgent]="p.urgent">
+            <div class="payment-top">
+              <div class="payment-icon" [class.urgent-icon]="p.urgent">💳</div>
+              <div class="payment-info">
+                <p class="payment-id">Acuerdo {{ p.id }}</p>
+                <p class="payment-name">{{ p.name }}</p>
+              </div>
+              <span class="payment-due" [class.urgent-due]="p.urgent">{{ p.dueDate }}</span>
+            </div>
+            <div class="payment-details">
+              <span>${{ p.amount.toLocaleString('es-CO') }}</span>
+              <span class="payment-installments">{{ p.installments }} cuota{{ p.installments > 1 ? 's' : '' }}</span>
+            </div>
+            @if (!isConfirmed(p.id)) {
+              <div class="payment-actions">
+                <button class="btn-accent btn-sm" (click)="confirm(p.id)">✓ Confirmar Recaudo</button>
+                <button class="btn-secondary btn-sm">↻ Reprogramar</button>
+              </div>
+            } @else {
+              <div class="confirmed-badge">
+                <span>✓</span> Recaudo confirmado
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Recovery Funnel -->
+  <div class="card">
+    <h4 class="card-title mb-6">🔄 Embudo de Recuperación</h4>
+    <div class="funnel">
+      @for (step of [
+        { label: 'Cartera Total',       value: 100, amount: '$1.2B',  color: '#0A3B4E' },
+        { label: 'Contactados',         value: 64,  amount: '$768M',  color: '#055177' },
+        { label: 'Con Acuerdo',         value: 38,  amount: '$456M',  color: '#10989B' },
+        { label: 'Pagos Confirmados',   value: 22,  amount: '$264M',  color: '#10b981' }
+      ]; track step.label) {
+        <div class="funnel-step">
+          <div class="funnel-bar-wrap">
+            <div
+              class="funnel-bar"
+              [style.width.%]="step.value"
+              [style.background]="step.color"
+            ></div>
+          </div>
+          <div class="funnel-meta">
+            <span class="funnel-label">{{ step.label }}</span>
+            <span class="funnel-value">{{ step.amount }}</span>
+            <span class="funnel-pct">{{ step.value }}%</span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+</div>

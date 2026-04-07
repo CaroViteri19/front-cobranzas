@@ -1,0 +1,77 @@
+<div class="shell">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <aside class="sidebar" [class.collapsed]="collapsed()">
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="logo-icon">BV</div>
+      @if (!collapsed()) {
+        <span class="logo-text">BankVision</span>
+      }
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      @for (item of navItems; track item.id) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [title]="collapsed() ? item.label : ''"
+        >
+          <span class="nav-icon">{{ item.icon }}</span>
+          @if (!collapsed()) {
+            <span class="nav-label">{{ item.label }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <!-- Collapse Toggle -->
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      {{ collapsed() ? '›' : '‹' }}
+    </button>
+  </aside>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Buscar asociado..." class="search-input" />
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Notification Bell -->
+        <button class="icon-btn" title="Notificaciones">
+          <span>🔔</span>
+          <span class="notif-dot"></span>
+        </button>
+
+        <!-- User Info -->
+        <div class="user-info">
+          <div class="user-details">
+            <span class="user-name">{{ user()?.name }}</span>
+            <span class="user-role">{{ user()?.role }}</span>
+          </div>
+          <div class="avatar">{{ userInitials() }}</div>
+        </div>
+
+        <!-- Logout -->
+        <button class="icon-btn logout-btn" (click)="logout()" title="Cerrar Sesión">
+          ✕
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      <router-outlet />
+    </div>
+
+  </main>
+</div>

@@ -1,0 +1,152 @@
+<div class="page-enter">
+
+  <!-- Header -->
+  <div class="module-header">
+    <div>
+      <h2 class="section-title">M2. Analítica y Perfilamiento IA</h2>
+      <p class="section-subtitle">Modelos predictivos de comportamiento de pago y scoring de riesgo.</p>
+    </div>
+    <div class="ai-badge">
+      <span>🧠</span>
+      <span>Motor IA: v3.2.0 Activo</span>
+    </div>
+  </div>
+
+  <!-- Row 1: Chart + Risk Distribution -->
+  <div class="grid-2 mb-6">
+
+    <!-- Trend Chart -->
+    <div class="card">
+      <h4 class="card-title mb-6">📈 Tendencia de Recuperación vs Meta</h4>
+      <div class="chart-area">
+        <!-- Y Axis Labels -->
+        <div class="y-axis">
+          @for (label of [100, 75, 50, 25, 0]; track label) {
+            <span>{{ label }}%</span>
+          }
+        </div>
+        <!-- Bars -->
+        <div class="bars-container">
+          @for (point of recoveryTrend; track point.month) {
+            <div class="bar-group">
+              <!-- Recovery bar -->
+              <div class="bar-wrap">
+                <div
+                  class="bar recovery-bar"
+                  [style.height.%]="barHeight(point.recovery)"
+                  [title]="'Recuperación: ' + point.recovery + '%'"
+                ></div>
+                <!-- Goal line -->
+                <div
+                  class="goal-line"
+                  [style.bottom.%]="barHeight(point.goal)"
+                ></div>
+              </div>
+              <span class="bar-label">{{ point.month }}</span>
+            </div>
+          }
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: var(--brand-accent)"></div>
+          <span>Recuperación Real</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color dashed"></div>
+          <span>Meta</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk Distribution -->
+    <div class="card">
+      <h4 class="card-title mb-6">⚠️ Distribución de Riesgo</h4>
+
+      <!-- Donut Chart (CSS) -->
+      <div class="donut-container">
+        <div class="donut">
+          <div class="donut-center">
+            <span class="donut-value">{{ store.associates().length }}</span>
+            <span class="donut-label">Asociados</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk Bars -->
+      <div class="risk-list">
+        @for (risk of riskData(); track risk.name) {
+          <div class="risk-item">
+            <div class="risk-row">
+              <div class="risk-left">
+                <span class="risk-dot" [style.background]="risk.color"></span>
+                <span class="risk-name">{{ risk.name }}</span>
+              </div>
+              <div class="risk-right">
+                <span class="risk-count">{{ risk.value }}</span>
+                <span class="risk-pct">{{ risk.pct }}%</span>
+              </div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" [style.width]="risk.pct + '%'" [style.background]="risk.color"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Profiling Table -->
+  <div class="card">
+    <h4 class="card-title mb-6">🎯 Perfilamiento de Asociados (Top Propensión)</h4>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Asociado</th>
+            <th>Score IA</th>
+            <th>Propensión</th>
+            <th>Segmento</th>
+            <th>Mejor Acción</th>
+            <th>Riesgo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of store.associates(); track a.id) {
+            <tr>
+              <td>
+                <div class="assoc-info">
+                  <div class="assoc-avatar">{{ a.name[0] }}</div>
+                  <div>
+                    <p class="assoc-name">{{ a.name }}</p>
+                    <p class="assoc-doc">{{ a.document }}</p>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="score-cell">
+                  <div class="progress-bar" style="width: 64px">
+                    <div class="progress-bar-fill" [style.width.%]="(a.score / 1000) * 100"></div>
+                  </div>
+                  <span class="score-val">{{ a.score }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [class]="a.propensity === 'Alta' ? 'badge-success' : a.propensity === 'Media' ? 'badge-info' : 'badge-danger'">
+                  {{ a.propensity }}
+                </span>
+              </td>
+              <td><span class="segment-text">{{ a.segment }}</span></td>
+              <td><span class="action-text">{{ a.lastAction || 'Pendiente' }}</span></td>
+              <td>
+                <span class="risk-text" [class]="'risk-' + a.risk.toLowerCase()">{{ a.risk }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

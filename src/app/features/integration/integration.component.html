@@ -1,0 +1,92 @@
+<div class="page-enter">
+  <!-- Header -->
+  <div class="module-header">
+    <div>
+      <h2 class="section-title">M1. Integración y Adquisición de Datos</h2>
+      <p class="section-subtitle">Gestión de ingesta vía API y Archivos Batch (TXT/CSV).</p>
+    </div>
+    <button class="btn-primary" (click)="simulateUpload()" [disabled]="uploading()">
+      <span>📤</span>
+      {{ uploading() ? 'Procesando...' : 'Cargar Archivo Batch' }}
+    </button>
+  </div>
+
+  <!-- Progress Bar (visible during upload) -->
+  @if (uploading()) {
+    <div class="card upload-progress">
+      <div class="progress-header">
+        <span class="progress-label">Procesando Lote: CARTERA_20240319.csv</span>
+        <span class="progress-pct">{{ progress() }}%</span>
+      </div>
+      <div class="progress-bar" style="height: 10px;">
+        <div class="progress-bar-fill" [style.width.%]="progress()"></div>
+      </div>
+      <div class="progress-steps">
+        <span [class.active]="progress() >= 30">Validando esquema...</span>
+        <span [class.active]="progress() >= 60">Verificando saldos...</span>
+        <span [class.active]="progress() >= 90">Conciliando con CORE...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Main Grid -->
+  <div class="grid-2">
+
+    <!-- API Status -->
+    <div class="card">
+      <h4 class="card-title mb-6">🗄️ Estado de Conexión CORE</h4>
+
+      <div class="status-pill success">
+        <div class="status-icon">✓</div>
+        <div>
+          <p class="status-name">API Gateway Activo</p>
+          <p class="status-meta">Latencia: 45ms | Uptime: 99.9%</p>
+        </div>
+        <span class="badge badge-success">ONLINE</span>
+      </div>
+
+      <p class="label-header">Endpoints Recientes</p>
+      @for (ep of endpoints; track ep.path) {
+        <div class="endpoint-row">
+          <div class="ep-left">
+            <span class="ep-method">{{ ep.method }}</span>
+            <span class="ep-path">{{ ep.path }}</span>
+          </div>
+          <div class="ep-right">
+            <span class="ep-status">{{ ep.status }}</span>
+            <span class="ep-time">{{ ep.time }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Batch History -->
+    <div class="card">
+      <h4 class="card-title mb-6">⏱ Historial de Cargas Batch</h4>
+
+      @for (batch of batches; track batch.name) {
+        <div class="batch-row">
+          <div class="batch-top">
+            <span class="batch-name">{{ batch.name }}</span>
+            <span class="badge" [class]="batch.status === 'Exitoso' ? 'badge-success' : batch.status === 'Parcial' ? 'badge-warning' : 'badge-danger'">
+              {{ batch.status }}
+            </span>
+          </div>
+          <div class="batch-bottom">
+            <div class="batch-meta">
+              <span>Registros: {{ batch.records.toLocaleString() }}</span>
+              @if (batch.errors > 0) {
+                <span class="error-count">⚠ Errores: {{ batch.errors }}</span>
+              }
+            </div>
+            <span class="batch-date">{{ batch.date }}</span>
+          </div>
+          @if (batch.errors > 0) {
+            <button class="btn-link">Ver Errores →</button>
+          }
+        </div>
+      }
+    </div>
+
+  </div>
+</div>

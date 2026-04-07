@@ -1,0 +1,80 @@
+<div class="login-page">
+
+  <!-- Background blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="login-card">
+    <!-- Header -->
+    <div class="login-header">
+      <div class="login-logo">
+        <span>BV</span>
+      </div>
+      <h1 class="login-title">BankVision</h1>
+      <p class="login-subtitle">Plataforma de Recuperación de Cartera</p>
+    </div>
+
+    <!-- Badge -->
+    <div class="compliance-badge">
+      <span class="badge-dot"></span>
+      <span>Conforme Ley 2300 — Dejen de Fregar</span>
+    </div>
+
+    <!-- Form -->
+    <form class="login-form" (submit)="onSubmit($event)">
+      <div class="form-group">
+        <label class="form-label">Correo Electrónico</label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉</span>
+          <input
+            type="email"
+            class="form-input has-icon"
+            placeholder="admin@fintra.co"
+            [value]="email()"
+            (input)="email.set($any($event.target).value)"
+            autocomplete="email"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input
+            type="password"
+            class="form-input has-icon"
+            placeholder="••••••••"
+            [value]="password()"
+            (input)="password.set($any($event.target).value)"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="alert alert-error">
+          <span>⚠</span>
+          {{ error() }}
+        </div>
+      }
+
+      <button type="submit" class="btn-login" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner"></span>
+          Autenticando...
+        } @else {
+          <span>Iniciar Sesión</span>
+          <span>→</span>
+        }
+      </button>
+    </form>
+
+    <!-- Hint -->
+    <p class="login-hint">
+      Demo: <strong>admin&#64;fintra.co</strong> / <strong>admin123</strong>
+    </p>
+  </div>
+</div>

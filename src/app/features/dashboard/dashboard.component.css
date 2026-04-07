@@ -1,0 +1,201 @@
+.stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-icon { font-size: 1.5rem; }
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--brand-primary);
+  letter-spacing: -0.02em;
+}
+
+/* ── Dashboard Grid ── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.col-2 {}
+
+/* ── Card Header ── */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #10b981;
+}
+
+/* ── Agent List ── */
+.agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.agent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.agent-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--brand-bg);
+  color: var(--brand-primary);
+  font-weight: 700;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+}
+
+.agent-name { font-size: 0.85rem; font-weight: 600; color: var(--brand-secondary); }
+
+.agent-right { text-align: right; }
+.agent-cases { font-size: 0.85rem; font-weight: 700; color: var(--brand-primary); display: block; }
+.agent-pct   { font-size: 0.7rem; color: #94a3b8; }
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.footer-note { font-size: 0.75rem; color: #94a3b8; }
+.footer-link { font-size: 0.75rem; font-weight: 700; color: var(--brand-accent); text-decoration: none; }
+.footer-link:hover { text-decoration: underline; }
+
+/* ── Compliance Card ── */
+.compliance-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: white;
+}
+
+.compliance-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 10px; }
+.compliance-desc  { font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.6; }
+
+.compliance-info { display: flex; flex-direction: column; gap: 10px; margin-top: 1.5rem; }
+
+.compliance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.85);
+}
+
+.compliance-note { font-size: 0.7rem; color: rgba(255,255,255,0.4); font-style: italic; }
+
+/* ── Case List ── */
+.case-list { display: flex; flex-direction: column; gap: 0; }
+
+.case-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.case-row:last-child { border-bottom: none; }
+
+.case-info { display: flex; flex-direction: column; }
+.case-name { font-size: 0.875rem; font-weight: 700; color: var(--brand-primary); }
+.case-doc  { font-size: 0.7rem; color: #94a3b8; }
+
+.case-meta { display: flex; align-items: center; gap: 10px; }
+.case-balance { font-size: 0.85rem; font-weight: 700; color: var(--brand-secondary); font-family: monospace; }
+
+/* ── Activity Log ── */
+.activity-log { display: flex; flex-direction: column; }
+
+.log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.log-dot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.log-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--brand-accent);
+  flex-shrink: 0;
+}
+
+.log-line {
+  width: 1px;
+  flex: 1;
+  min-height: 24px;
+  background: #f1f5f9;
+  margin-top: 4px;
+}
+
+.log-body { flex: 1; min-width: 0; }
+
+.log-action {
+  font-size: 0.8rem;
+  color: var(--brand-primary);
+  line-height: 1.4;
+}
+
+.log-target { font-size: 0.7rem; color: var(--brand-secondary); font-weight: 500; margin-top: 2px; }
+.log-time   { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; flex-shrink: 0; }
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .dash-grid { grid-template-columns: 1fr; }
+}

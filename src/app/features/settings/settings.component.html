@@ -1,0 +1,205 @@
+<div class="page-enter">
+
+  <div class="module-header">
+    <div>
+      <h2 class="section-title">Configuración del Sistema</h2>
+      <p class="section-subtitle">Reglas de asignación, estados de caso y parámetros generales.</p>
+    </div>
+  </div>
+
+  <!-- Section Tabs -->
+  <div class="tab-bar mb-6">
+    <button class="tab-btn" [class.active]="activeSection() === 'rules'"    (click)="activeSection.set('rules')">⚙️ Reglas de Asignación</button>
+    <button class="tab-btn" [class.active]="activeSection() === 'statuses'" (click)="activeSection.set('statuses')">🏷️ Estados de Caso</button>
+    <button class="tab-btn" [class.active]="activeSection() === 'system'"   (click)="activeSection.set('system')">🔧 Sistema</button>
+  </div>
+
+  <!-- Rules Section -->
+  @if (activeSection() === 'rules') {
+    <div class="page-enter">
+      <div class="section-header">
+        <h4 class="section-sub">Reglas de Asignación Automática</h4>
+        <div class="section-actions">
+          <button class="btn-secondary" (click)="rebalance()">⚖️ Rebalancear Casos</button>
+          <button class="btn-primary" (click)="showNewRule.set(!showNewRule())">+ Nueva Regla</button>
+        </div>
+      </div>
+
+      @if (showNewRule()) {
+        <div class="card new-rule-form mb-6">
+          <h4 class="card-title mb-4">Nueva Regla de Asignación</h4>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">Nombre de la Regla</label>
+              <input type="text" class="form-input" [(ngModel)]="newRuleName" placeholder="Ej: Mora > 5M Alto Riesgo" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Monto Mínimo (COP)</label>
+              <input type="number" class="form-input" [(ngModel)]="newRuleAmount" placeholder="Ej: 5000000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nivel de Riesgo</label>
+              <select class="form-select" [(ngModel)]="newRuleRisk">
+                <option value="">Cualquiera</option>
+                <option value="Bajo">Bajo</option>
+                <option value="Medio">Medio</option>
+                <option value="Alto">Alto</option>
+                <option value="Crítico">Crítico</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-secondary" (click)="showNewRule.set(false)">Cancelar</button>
+            <button class="btn-accent" (click)="addRule()">Crear Regla</button>
+          </div>
+        </div>
+      }
+
+      <div class="rules-list">
+        @for (rule of store.assignmentRules(); track rule.id) {
+          <div class="rule-card" [class.inactive]="!rule.isActive">
+            <div class="rule-priority">P{{ rule.priority }}</div>
+            <div class="rule-info">
+              <p class="rule-name">{{ rule.name }}</p>
+              <div class="rule-tags">
+                @if (rule.minAmount) {
+                  <span class="rule-tag">💰 Monto ≥ ${{ rule.minAmount.toLocaleString('es-CO') }}</span>
+                }
+                @if (rule.riskLevels?.length) {
+                  @for (risk of rule.riskLevels!; track risk) {
+                    <span class="rule-tag">⚠ Riesgo: {{ risk }}</span>
+                  }
+                }
+                @if (rule.maxFailedAttempts) {
+                  <span class="rule-tag">🔄 Intentos fallidos: {{ rule.maxFailedAttempts }}</span>
+                }
+              </div>
+            </div>
+            <div class="rule-actions">
+              <div class="toggle" [class.on]="rule.isActive" (click)="toggleRule(rule.id, rule.isActive)">
+                <div class="toggle-knob"></div>
+              </div>
+              <span class="rule-status">{{ rule.isActive ? 'Activa' : 'Inactiva' }}</span>
+              <button class="btn-icon danger" (click)="deleteRule(rule.id)" title="Eliminar">✕</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Statuses Section -->
+  @if (activeSection() === 'statuses') {
+    <div class="page-enter">
+      <div class="section-header">
+        <h4 class="section-sub">Estados del Flujo de Casos</h4>
+        <button class="btn-primary">+ Nuevo Estado</button>
+      </div>
+
+      <div class="statuses-grid">
+        @for (s of store.caseStatuses(); track s.id) {
+          <div class="status-card">
+            <div class="status-top">
+              <div class="status-color-dot" [style.background]="s.color"></div>
+              <div class="status-info">
+                <p class="status-name">{{ s.name }}</p>
+                <p class="status-desc">{{ s.description }}</p>
+              </div>
+            </div>
+            <div class="status-badges">
+              @if (s.isInitial) { <span class="badge badge-info">Inicial</span> }
+              @if (s.isFinal)   { <span class="badge badge-gray">Final</span> }
+              <span class="badge badge-gray">{{ s.id }}</span>
+            </div>
+            <div class="status-actions">
+              <button class="btn-secondary btn-sm">Editar</button>
+              @if (!s.isInitial && !s.isFinal) {
+                <button class="btn-icon danger btn-sm">✕</button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- System Section -->
+  @if (activeSection() === 'system') {
+    <div class="page-enter">
+      <div class="grid-2">
+        <div class="card">
+          <h4 class="card-title mb-6">🤖 Motor IA</h4>
+          <div class="system-rows">
+            @for (item of [
+              { label: 'Versión del Modelo',   value: 'v3.2.0',     type: 'text' },
+              { label: 'Última Actualización', value: '15 Mar 2024', type: 'text' },
+              { label: 'Umbral de Propensión', value: '65%',         type: 'text' },
+              { label: 'Reentrenamiento Auto', value: 'Activado',    type: 'badge-success' },
+            ]; track item.label) {
+              <div class="system-row">
+                <span class="sys-label">{{ item.label }}</span>
+                @if (item.type === 'badge-success') {
+                  <span class="badge badge-success">{{ item.value }}</span>
+                } @else {
+                  <span class="sys-value">{{ item.value }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 class="card-title mb-6">🔒 Seguridad y Auditoría</h4>
+          <div class="system-rows">
+            @for (item of [
+              { label: 'Cifrado de datos',      value: 'AES-256',    type: 'text' },
+              { label: 'Bitácora inmutable',     value: 'Activa',     type: 'badge-success' },
+              { label: 'Retención de logs',      value: '7 años',     type: 'text' },
+              { label: 'Doble autenticación',    value: 'Habilitado', type: 'badge-success' },
+            ]; track item.label) {
+              <div class="system-row">
+                <span class="sys-label">{{ item.label }}</span>
+                @if (item.type === 'badge-success') {
+                  <span class="badge badge-success">{{ item.value }}</span>
+                } @else {
+                  <span class="sys-value">{{ item.value }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="card">
+          <h4 class="card-title mb-6">👤 Mi Perfil</h4>
+          <div class="profile-section">
+            <div class="profile-avatar">CC</div>
+            <div>
+              <p class="profile-name">Camilo Cantor</p>
+              <p class="profile-role">Administrador</p>
+              <p class="profile-email">admin&#64;fintra.co</p>
+            </div>
+          </div>
+          <button class="btn-secondary" style="margin-top: 1rem; width: 100%;">Cambiar Contraseña</button>
+        </div>
+
+        <div class="card">
+          <h4 class="card-title mb-6">📡 Conexiones API</h4>
+          <div class="system-rows">
+            @for (conn of [
+              { name: 'Core Bancario',   status: 'Conectado',    ok: true },
+              { name: 'WhatsApp API',    status: 'Conectado',    ok: true },
+              { name: 'SMS Gateway',     status: 'Conectado',    ok: true },
+              { name: 'CIFIN/Datacrédito', status: 'En revisión', ok: false },
+            ]; track conn.name) {
+              <div class="system-row">
+                <span class="sys-label">{{ conn.name }}</span>
+                <span class="badge" [class]="conn.ok ? 'badge-success' : 'badge-warning'">{{ conn.status }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

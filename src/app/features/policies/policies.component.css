@@ -1,0 +1,105 @@
+.module-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 16px;
+  margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+
+.mb-6 { margin-bottom: 1.5rem; }
+.card-title { font-size: 1rem; font-weight: 700; color: var(--brand-primary); }
+
+.policy-card {
+  background: white;
+  border-radius: var(--radius-2xl);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: transform 0.2s;
+}
+.policy-card:hover { transform: translateY(-2px); }
+
+.policy-header { display: flex; align-items: center; gap: 12px; }
+
+.policy-dot {
+  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+}
+
+.policy-info { flex: 1; }
+.policy-name     { font-size: 1rem; font-weight: 700; color: var(--brand-primary); }
+.policy-criteria { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+
+.policy-stats {
+  display: flex; gap: 1rem;
+  padding: 12px;
+  background: var(--brand-bg);
+  border-radius: var(--radius-md);
+}
+
+.pstat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.pstat-value { font-size: 1.1rem; font-weight: 800; color: var(--brand-primary); }
+.pstat-label { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+.pstat-divider { width: 1px; background: #e2e8f0; }
+
+.policy-actions { display: flex; gap: 8px; }
+
+.btn-sm { padding: 6px 14px !important; font-size: 0.75rem !important; }
+
+/* Channels */
+.channels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .channels-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.channel-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid;
+}
+
+.channel-card.allowed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.channel-card.blocked {
+  background: #fef2f2;
+  border-color: #fecaca;
+  opacity: 0.7;
+}
+
+.channel-icon { font-size: 1.2rem; flex-shrink: 0; }
+.channel-info { flex: 1; min-width: 0; }
+.channel-name   { font-size: 0.8rem; font-weight: 700; color: var(--brand-primary); }
+.channel-detail { font-size: 0.65rem; color: #64748b; }
+
+.channel-status {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.channel-card.allowed .channel-status { color: #10b981; }
+.channel-card.blocked .channel-status { color: #ef4444; }
+
+.compliance-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background: #fffbeb;
+  border: 1px solid #fed7aa;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  color: #92400e;
+  line-height: 1.5;
+}

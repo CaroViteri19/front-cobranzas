@@ -1,0 +1,187 @@
+<div class="page-enter">
+
+  <!-- Header -->
+  <div class="module-header">
+    <div>
+      <h2 class="section-title">M5. Gestión de Casos y Asesores</h2>
+      <p class="section-subtitle">Bitácora de gestión, asignación de casos y seguimiento de acuerdos.</p>
+    </div>
+    <div class="header-actions">
+      <div class="agents-stack">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="agent-chip">A{{ i }}</div>
+        }
+        <div class="agent-chip more">+8</div>
+      </div>
+      <select class="form-select filter-select" (change)="filterStatus.set($any($event.target).value)">
+        <option value="">Todos los estados</option>
+        @for (s of store.caseStatuses(); track s.id) {
+          <option [value]="s.id">{{ s.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="grid-4 mb-6">
+    @for (stat of summaryStats; track stat.label) {
+      <div class="stat-mini-card">
+        <p class="smc-label">{{ stat.label }}</p>
+        <div class="smc-value-row">
+          <h4 class="smc-value">{{ stat.value }}</h4>
+          <div class="smc-dot" [style.background]="stat.color"></div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Main Grid -->
+  <div class="cases-layout">
+
+    <!-- Cases Table -->
+    <div class="card cases-table-card">
+      <div class="card-header-row">
+        <h4 class="card-title">Cola de Gestión Prioritaria</h4>
+        <span class="total-count">{{ filteredCases().length }} casos</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Asociado</th>
+              <th>Score IA</th>
+              <th>Valor a Pagar</th>
+              <th>Días Mora</th>
+              <th>Estado</th>
+              <th>Prioridad</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of filteredCases(); track c.id) {
+              @let assoc = store.getAssociate(c.associateId);
+              @let status = store.getStatusInfo(c.status);
+              @if (assoc) {
+                <tr
+                  [class.selected]="selectedCaseId() === c.id"
+                  (click)="selectCase(c.id)"
+                  style="cursor: pointer"
+                >
+                  <td>
+                    <p class="assoc-name">{{ assoc.name }}</p>
+                    <p class="assoc-doc">{{ assoc.document }}</p>
+                  </td>
+                  <td>
+                    <div class="score-cell">
+                      <div class="progress-bar" style="width: 48px">
+                        <div class="progress-bar-fill" [style.width.%]="(assoc.score/1000)*100"></div>
+                      </div>
+                      <span>{{ assoc.score }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="balance">${{ assoc.balance.toLocaleString('es-CO') }}</span>
+                  </td>
+                  <td>
+                    <span [class]="assoc.daysOverdue > 60 ? 'days-critical' : assoc.daysOverdue > 30 ? 'days-warn' : 'days-ok'">
+                      {{ assoc.daysOverdue }} días
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      class="status-chip"
+                      [style.background]="status.color + '22'"
+                      [style.color]="status.color"
+                    >
+                      {{ status.name }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [class]="priorityBadge[c.priority]">{{ c.priority }}</span>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    @if (selectedCase(); as sc) {
+      @let assoc = store.getAssociate(sc.associateId);
+      @if (assoc) {
+        <div class="card detail-panel">
+          <div class="detail-header">
+            <div class="detail-avatar">{{ assoc.name[0] }}</div>
+            <div>
+              <h4 class="detail-name">{{ assoc.name }}</h4>
+              <p class="detail-id">{{ sc.id }} · {{ assoc.document }}</p>
+            </div>
+          </div>
+
+          <div class="detail-stats">
+            <div class="ds">
+              <span class="ds-label">Saldo</span>
+              <span class="ds-value">${{ assoc.balance.toLocaleString('es-CO') }}</span>
+            </div>
+            <div class="ds">
+              <span class="ds-label">Mora</span>
+              <span class="ds-value">{{ assoc.daysOverdue }}d</span>
+            </div>
+            <div class="ds">
+              <span class="ds-label">Score</span>
+              <span class="ds-value">{{ assoc.score }}</span>
+            </div>
+          </div>
+
+          <!-- Change Status -->
+          <div class="form-group mb-3">
+            <label class="form-label">Estado del Caso</label>
+            <select
+              class="form-select"
+              [value]="sc.status"
+              (change)="store.updateCase(sc.id, { status: $any($event.target).value })"
+            >
+              @for (s of store.caseStatuses(); track s.id) {
+                <option [value]="s.id">{{ s.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Add Note -->
+          <div class="form-group mb-3">
+            <label class="form-label">Agregar Nota</label>
+            <textarea
+              class="form-input"
+              rows="3"
+              placeholder="Ej: Contacto exitoso, prometió pago el 15/04..."
+              [(ngModel)]="noteText"
+              style="resize: vertical; min-height: 80px;"
+            ></textarea>
+          </div>
+          <button class="btn-accent" style="width:100%; margin-bottom: 1rem;" (click)="addNote()">
+            💾 Guardar Nota
+          </button>
+
+          <!-- Notes History -->
+          @if (sc.notes.length > 0) {
+            <div class="notes-list">
+              <p class="form-label mb-2">Historial de Notas</p>
+              @for (note of sc.notes; track note.date) {
+                <div class="note-item">
+                  <div class="note-header">
+                    <span class="note-author">{{ note.author }}</span>
+                    <span class="note-date">{{ formatDate(note.date) }}</span>
+                  </div>
+                  <p class="note-text">{{ note.text }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+
+  </div>
+
+</div>

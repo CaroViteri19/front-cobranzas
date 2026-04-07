@@ -1,0 +1,83 @@
+.module-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.card-title { font-size: 1rem; font-weight: 700; color: var(--brand-primary); }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.btn-sm { padding: 6px 14px !important; font-size: 0.75rem !important; }
+
+/* Tabs */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  background: white;
+  padding: 6px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0,0,0,0.04);
+  margin-bottom: 1.5rem;
+  width: fit-content;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-lg);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.tab-btn:hover { color: var(--brand-primary); background: var(--brand-bg); }
+.tab-btn.active { background: var(--brand-primary); color: white; }
+
+.tab-content {}
+
+/* KPIs */
+.kpi-note  { font-size: 0.7rem; color: #94a3b8; margin-bottom: 6px; }
+.kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--brand-primary); }
+.kpi-label { font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 4px; }
+
+/* Reports List */
+.report-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.report-row:last-child { border-bottom: none; }
+
+.report-icon { font-size: 1.25rem; flex-shrink: 0; }
+
+.report-info { flex: 1; min-width: 0; }
+.report-title { font-size: 0.875rem; font-weight: 600; color: var(--brand-primary); }
+.report-meta  { font-size: 0.7rem; color: #94a3b8; margin-top: 2px; }
+
+/* Compliance */
+.compliance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.comp-left { display: flex; align-items: center; gap: 8px; }
+.comp-icon { font-size: 0.875rem; }
+.comp-label { font-size: 0.8rem; color: #475569; }
+.comp-right {}
+.comp-val { font-size: 0.85rem; font-weight: 700; color: #10b981; }
+.comp-val.warn { color: #f59e0b; }
+
+/* Score Big */
+.compliance-score { text-align: center; padding: 1.5rem 0; }
+.score-big   { font-size: 3rem; font-weight: 900; letter-spacing: -0.03em; display: block; }
+.score-label { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+
+/* Score Cell */
+.score-cell { display: flex; align-items: center; gap: 8px; }
