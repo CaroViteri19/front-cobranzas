@@ -41,6 +41,8 @@ export interface Case {
   status: string;
   priority: 'Baja' | 'Media' | 'Alta' | 'Crítica';
   assignedTo?: string;
+  assignmentSource?: 'IA' | 'Manual';   // who/what triggered the assignment
+  desbordeIA?: boolean;                  // flagged by M4 AI overflow
   notes: CaseNote[];
   agreements: Agreement[];
 }
@@ -52,6 +54,8 @@ export interface CaseStatus {
   description: string;
   isInitial?: boolean;
   isFinal?: boolean;
+  predecessors?: string[];   // IDs of valid predecessor statuses
+  successors?: string[];     // IDs of valid successor statuses
 }
 
 export interface Policy {

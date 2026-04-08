@@ -12,9 +12,22 @@ import { StoreService } from '../../core/services/store.service';
 export class CaseManagementComponent {
   store = inject(StoreService);
 
-  selectedCaseId = signal<string | null>(null);
-  noteText       = signal('');
-  filterStatus   = signal('');
+  selectedCaseId  = signal<string | null>(null);
+  noteText        = signal('');
+  filterStatus    = signal('');
+  showReassign    = signal(false);
+  reassignTarget  = '';
+
+  /**
+   * Current user role determines UI capabilities:
+   *   Administrador / Supervisor → can reassign cases
+   *   Agente → read-only on assignment
+   * In production this would come from AuthService; mocked here.
+   */
+  readonly currentRole = signal<'Administrador' | 'Supervisor' | 'Agente' | 'Auditor'>('Administrador');
+  readonly canReassign = computed(() =>
+    this.currentRole() === 'Administrador' || this.currentRole() === 'Supervisor'
+  );
 
   readonly filteredCases = computed(() => {
     const filter = this.filterStatus();
@@ -27,9 +40,24 @@ export class CaseManagementComponent {
     this.store.cases().find(c => c.id === this.selectedCaseId()) ?? null
   );
 
+  /** Summary counters driven by signals */
+  readonly pendingCount = computed(() =>
+    this.store.cases().filter(c => c.status === 'ST-001').length
+  );
+  readonly promisaCount = computed(() =>
+    this.store.cases().filter(c => c.status === 'ST-004').length
+  );
+  readonly gestionCount = computed(() =>
+    this.store.cases().filter(c => c.status === 'ST-002').length
+  );
+  readonly desbordeCount = computed(() =>
+    this.store.cases().filter(c => c.desbordeIA).length
+  );
+
   selectCase(id: string): void {
     this.selectedCaseId.set(this.selectedCaseId() === id ? null : id);
     this.noteText.set('');
+    this.showReassign.set(false);
   }
 
   addNote(): void {
@@ -38,6 +66,15 @@ export class CaseManagementComponent {
     if (id && text) {
       this.store.addNoteToCase(id, text);
       this.noteText.set('');
+    }
+  }
+
+  confirmReassign(): void {
+    const id = this.selectedCaseId();
+    if (id && this.reassignTarget) {
+      this.store.reassignCase(id, this.reassignTarget, 'Manual');
+      this.showReassign.set(false);
+      this.reassignTarget = '';
     }
   }
 
@@ -54,17 +91,11 @@ export class CaseManagementComponent {
     'Crítica': 'badge-danger',
   };
 
-  readonly summaryStats = [
-    { label: 'Casos Pendientes',     value: '450', color: '#3b82f6' },
-    { label: 'Promesas de Pago',     value: '125', color: '#10b981' },
-    { label: 'Acuerdos Incumplidos', value: '12',  color: '#ef4444' },
-    { label: 'En Gestión',           value: '84',  color: '#10989B' },
-  ];
-
   readonly activityLog = [
-    { user: 'Asesor 01',  action: 'Registró promesa de pago',      target: 'Lucía Méndez',      time: 'Hace 5m' },
-    { user: 'Sistema IA', action: 'Desbordó caso por alto riesgo',  target: 'Fernando Soto',     time: 'Hace 12m' },
-    { user: 'Asesor 03',  action: 'Adjuntó evidencia de contacto',  target: 'Roberto Jaramillo', time: 'Hace 25m' },
-    { user: 'Sistema IA', action: 'Cerró caso por recaudo exitoso', target: 'Elena Rivas',       time: 'Hace 1h' },
+    { user: 'Agente 01',  action: 'Registró promesa de pago',        target: 'Lucía Méndez',      time: 'Hace 5m' },
+    { user: 'M4 IA',      action: 'Desborde automático — riesgo Crit', target: 'Ana López',        time: 'Hace 12m' },
+    { user: 'Agente 03',  action: 'Adjuntó evidencia de contacto',    target: 'Roberto Jaramillo', time: 'Hace 25m' },
+    { user: 'Supervisor', action: 'Reasignó caso manualmente',        target: 'Pedro Vargas',      time: 'Hace 40m' },
+    { user: 'M4 IA',      action: 'Cerró caso por recaudo exitoso',   target: 'Elena Rivas',       time: 'Hace 1h' },
   ];
 }

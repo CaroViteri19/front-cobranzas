@@ -21,7 +21,7 @@ export class StoreService {
   );
 
   readonly activeCasesCount = computed(() =>
-    this.cases().filter(c => c.status !== 'ST-006').length
+    this.cases().filter(c => c.status !== 'ST-006' && c.status !== 'ST-007').length
   );
 
   readonly agentLoad = computed(() => {
@@ -36,6 +36,15 @@ export class StoreService {
     }));
   });
 
+  /** Count of cases per status — used for deletion guard in Settings */
+  readonly caseCountPerStatus = computed(() => {
+    const counts: Record<string, number> = {};
+    this.cases().forEach(c => {
+      counts[c.status] = (counts[c.status] ?? 0) + 1;
+    });
+    return counts;
+  });
+
   constructor() {
     this.seedData();
   }
@@ -47,13 +56,53 @@ export class StoreService {
       { id: 'R-002', name: 'Intentos Fallidos > 3', maxFailedAttempts: 3, isActive: true, priority: 2 },
     ];
 
+    // ── 7-State Finite Machine (Ley 2300 compliant) ────────────────
     const statuses: CaseStatus[] = [
-      { id: 'ST-001', name: 'Nuevo',               color: '#3b82f6', description: 'Caso recién ingresado',       isInitial: true },
-      { id: 'ST-002', name: 'En Gestión',           color: '#10b981', description: 'En proceso de cobro' },
-      { id: 'ST-003', name: 'Promesa Pago',         color: '#10989B', description: 'Acuerdo formalizado' },
-      { id: 'ST-004', name: 'Ilocalizado',          color: '#f59e0b', description: 'Sin contacto exitoso' },
-      { id: 'ST-005', name: 'Prejurídico',          color: '#ef4444', description: 'Escalado a legal' },
-      { id: 'ST-006', name: 'Cerrado',              color: '#64748b', description: 'Gestión finalizada',          isFinal: true },
+      {
+        id: 'ST-001', name: 'Nuevo', color: '#3b82f6',
+        description: 'Caso recién ingresado desde CORE o carga batch',
+        isInitial: true,
+        predecessors: [],
+        successors: ['ST-002', 'ST-003']
+      },
+      {
+        id: 'ST-002', name: 'En Gestión', color: '#10b981',
+        description: 'En proceso activo de cobro por agente asignado',
+        predecessors: ['ST-001', 'ST-003', 'ST-004'],
+        successors: ['ST-004', 'ST-003', 'ST-005']
+      },
+      {
+        id: 'ST-003', name: 'Ilocalizado', color: '#f59e0b',
+        description: 'Sin contacto exitoso con el asociado',
+        predecessors: ['ST-001', 'ST-002'],
+        successors: ['ST-002', 'ST-005']
+      },
+      {
+        id: 'ST-004', name: 'Promesa Pago', color: '#10989B',
+        description: 'Acuerdo de pago formalizado con el asociado',
+        predecessors: ['ST-002'],
+        successors: ['ST-006', 'ST-002']
+      },
+      {
+        id: 'ST-005', name: 'Prejurídico', color: '#f97316',
+        description: 'Escalado a proceso legal preventivo',
+        predecessors: ['ST-002', 'ST-003'],
+        successors: ['ST-006', 'ST-007']
+      },
+      {
+        id: 'ST-006', name: 'Cerrado', color: '#64748b',
+        description: 'Gestión finalizada — ciclo de cobranza completo',
+        isFinal: true,
+        predecessors: ['ST-004', 'ST-005'],
+        successors: []
+      },
+      {
+        id: 'ST-007', name: 'Cobro Judicial', color: '#ef4444',
+        description: 'Proceso judicial activo — demanda interpuesta',
+        isFinal: true,
+        predecessors: ['ST-005'],
+        successors: []
+      },
     ];
 
     const associates: Associate[] = [
@@ -65,14 +114,44 @@ export class StoreService {
       { id: '6', name: 'Lucía Méndez',  document: '60708090', email: 'lucia@example.com',  phone: '3165554433', segment: 'Administrativa', score: 720, propensity: 'Alta',  risk: 'Bajo',    balance: 2_100_000, daysOverdue: 8 },
     ];
 
-    const cases: Case[] = associates.map(a => ({
-      id: `CS-${a.id}`,
-      associateId: a.id,
-      status: a.daysOverdue > 90 ? 'ST-005' : a.daysOverdue > 0 ? 'ST-002' : 'ST-001',
-      priority: a.risk === 'Crítico' ? 'Crítica' : a.risk === 'Alto' ? 'Alta' : a.risk === 'Medio' ? 'Media' : 'Baja',
-      notes: [],
-      agreements: []
-    }));
+    const cases: Case[] = [
+      {
+        id: 'CS-1', associateId: '1',
+        status: 'ST-001', priority: 'Baja',
+        assignedTo: undefined, assignmentSource: undefined, desbordeIA: false,
+        notes: [], agreements: []
+      },
+      {
+        id: 'CS-2', associateId: '2',
+        status: 'ST-002', priority: 'Alta',
+        assignedTo: 'Agente 02', assignmentSource: 'Manual', desbordeIA: false,
+        notes: [], agreements: []
+      },
+      {
+        id: 'CS-3', associateId: '3',
+        status: 'ST-002', priority: 'Media',
+        assignedTo: 'Agente 01', assignmentSource: 'IA', desbordeIA: false,
+        notes: [], agreements: []
+      },
+      {
+        id: 'CS-4', associateId: '4',
+        status: 'ST-005', priority: 'Crítica',
+        assignedTo: 'Agente 03', assignmentSource: 'IA', desbordeIA: true,
+        notes: [], agreements: []
+      },
+      {
+        id: 'CS-5', associateId: '5',
+        status: 'ST-003', priority: 'Alta',
+        assignedTo: 'Agente 01', assignmentSource: 'IA', desbordeIA: true,
+        notes: [], agreements: []
+      },
+      {
+        id: 'CS-6', associateId: '6',
+        status: 'ST-004', priority: 'Baja',
+        assignedTo: 'Agente 02', assignmentSource: 'Manual', desbordeIA: false,
+        notes: [], agreements: []
+      },
+    ];
 
     const policies: Policy[] = [
       { id: 'SEG-001', name: 'Preventiva',     criteria: 'Mora < 0 días',      intensity: 'Baja',    color: '#10b981' },
@@ -151,9 +230,10 @@ export class StoreService {
     this.assignmentRules.update(list => list.filter(r => r.id !== id));
   }
 
-  // ── Rebalance ──────────────────────────────────────────────────────
+  // ── Rebalance (Load Balancer) ──────────────────────────────────────
+  readonly availableAgents = ['Agente 01', 'Agente 02', 'Agente 03', 'Agente 04'];
+
   rebalanceCases(): void {
-    const agents = ['Agente 01', 'Agente 02', 'Agente 03', 'Agente 04'];
     let agentIndex = 0;
     this.cases.update(list =>
       list.map(c => {
@@ -168,10 +248,26 @@ export class StoreService {
         });
 
         if (shouldAssign) {
-          return { ...c, assignedTo: agents[agentIndex++ % agents.length], status: 'ST-002' };
+          return {
+            ...c,
+            assignedTo: this.availableAgents[agentIndex++ % this.availableAgents.length],
+            assignmentSource: 'IA' as const,
+            desbordeIA: true,
+            status: 'ST-002'
+          };
         }
         return c;
       })
+    );
+  }
+
+  /** Manual reassignment by Supervisor or Administrador */
+  reassignCase(caseId: string, agentName: string, source: 'IA' | 'Manual' = 'Manual'): void {
+    this.cases.update(list =>
+      list.map(c => c.id === caseId
+        ? { ...c, assignedTo: agentName, assignmentSource: source, desbordeIA: source === 'IA' }
+        : c
+      )
     );
   }
 

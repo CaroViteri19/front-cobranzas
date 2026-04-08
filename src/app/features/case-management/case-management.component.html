@@ -3,15 +3,20 @@
   <!-- Header -->
   <div class="module-header">
     <div>
-      <h2 class="section-title">M5. Gestión de Casos y Asesores</h2>
-      <p class="section-subtitle">Bitácora de gestión, asignación de casos y seguimiento de acuerdos.</p>
+      <h2 class="section-title">M5. Gestión de Casos y Asignación de Agentes</h2>
+      <p class="section-subtitle">Bitácora de gestión, desborde IA, reasignación manual y seguimiento de acuerdos.</p>
     </div>
     <div class="header-actions">
-      <div class="agents-stack">
-        @for (i of [1,2,3,4]; track i) {
-          <div class="agent-chip">A{{ i }}</div>
-        }
-        <div class="agent-chip more">+8</div>
+      <!-- Role switcher (demo only) -->
+      <div class="role-switcher">
+        <span class="role-label-sm">Rol demo:</span>
+        <select class="form-select filter-select" [value]="currentRole()"
+          (change)="currentRole.set($any($event.target).value)">
+          <option>Administrador</option>
+          <option>Supervisor</option>
+          <option>Agente</option>
+          <option>Auditor</option>
+        </select>
       </div>
       <select class="form-select filter-select" (change)="filterStatus.set($any($event.target).value)">
         <option value="">Todos los estados</option>
@@ -22,17 +27,36 @@
     </div>
   </div>
 
-  <!-- Summary Stats -->
+  <!-- Summary Stats (live from signals) -->
   <div class="grid-4 mb-6">
-    @for (stat of summaryStats; track stat.label) {
-      <div class="stat-mini-card">
-        <p class="smc-label">{{ stat.label }}</p>
-        <div class="smc-value-row">
-          <h4 class="smc-value">{{ stat.value }}</h4>
-          <div class="smc-dot" [style.background]="stat.color"></div>
-        </div>
+    <div class="stat-mini-card">
+      <p class="smc-label">Casos Nuevos</p>
+      <div class="smc-value-row">
+        <h4 class="smc-value">{{ pendingCount() }}</h4>
+        <div class="smc-dot" style="background:#3b82f6"></div>
       </div>
-    }
+    </div>
+    <div class="stat-mini-card">
+      <p class="smc-label">Promesas de Pago</p>
+      <div class="smc-value-row">
+        <h4 class="smc-value">{{ promisaCount() }}</h4>
+        <div class="smc-dot" style="background:#10b981"></div>
+      </div>
+    </div>
+    <div class="stat-mini-card">
+      <p class="smc-label">En Gestión</p>
+      <div class="smc-value-row">
+        <h4 class="smc-value">{{ gestionCount() }}</h4>
+        <div class="smc-dot" style="background:#10989B"></div>
+      </div>
+    </div>
+    <div class="stat-mini-card">
+      <p class="smc-label">Desborde IA</p>
+      <div class="smc-value-row">
+        <h4 class="smc-value" style="color:#f97316">{{ desbordeCount() }}</h4>
+        <div class="smc-dot" style="background:#f97316"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Main Grid -->
@@ -50,10 +74,11 @@
             <tr>
               <th>Asociado</th>
               <th>Score IA</th>
-              <th>Valor a Pagar</th>
-              <th>Días Mora</th>
+              <th>Valor</th>
+              <th>Mora</th>
               <th>Estado</th>
               <th>Prioridad</th>
+              <th>Asignación</th>
             </tr>
           </thead>
           <tbody>
@@ -87,16 +112,29 @@
                     </span>
                   </td>
                   <td>
-                    <span
-                      class="status-chip"
+                    <span class="status-chip"
                       [style.background]="status.color + '22'"
-                      [style.color]="status.color"
-                    >
+                      [style.color]="status.color">
                       {{ status.name }}
                     </span>
                   </td>
                   <td>
                     <span class="badge" [class]="priorityBadge[c.priority]">{{ c.priority }}</span>
+                  </td>
+                  <td>
+                    @if (c.desbordeIA) {
+                      <div class="assign-cell">
+                        <span class="desborde-badge">🤖 Desborde IA</span>
+                        <span class="assign-agent">{{ c.assignedTo }}</span>
+                      </div>
+                    } @else if (c.assignedTo) {
+                      <div class="assign-cell">
+                        <span class="source-badge manual">👤 Manual</span>
+                        <span class="assign-agent">{{ c.assignedTo }}</span>
+                      </div>
+                    } @else {
+                      <span class="unassigned">Sin asignar</span>
+                    }
                   </td>
                 </tr>
               }
@@ -116,22 +154,19 @@
             <div>
               <h4 class="detail-name">{{ assoc.name }}</h4>
               <p class="detail-id">{{ sc.id }} · {{ assoc.document }}</p>
+              <!-- Assignment badges in detail header -->
+              @if (sc.desbordeIA) {
+                <span class="desborde-badge mt-1">🤖 Desborde IA — {{ sc.assignedTo }}</span>
+              } @else if (sc.assignedTo) {
+                <span class="source-badge manual mt-1">👤 Manual — {{ sc.assignedTo }}</span>
+              }
             </div>
           </div>
 
           <div class="detail-stats">
-            <div class="ds">
-              <span class="ds-label">Saldo</span>
-              <span class="ds-value">${{ assoc.balance.toLocaleString('es-CO') }}</span>
-            </div>
-            <div class="ds">
-              <span class="ds-label">Mora</span>
-              <span class="ds-value">{{ assoc.daysOverdue }}d</span>
-            </div>
-            <div class="ds">
-              <span class="ds-label">Score</span>
-              <span class="ds-value">{{ assoc.score }}</span>
-            </div>
+            <div class="ds"><span class="ds-label">Saldo</span><span class="ds-value">${{ assoc.balance.toLocaleString('es-CO') }}</span></div>
+            <div class="ds"><span class="ds-label">Mora</span><span class="ds-value">{{ assoc.daysOverdue }}d</span></div>
+            <div class="ds"><span class="ds-label">Score</span><span class="ds-value">{{ assoc.score }}</span></div>
           </div>
 
           <!-- Change Status -->
@@ -148,8 +183,42 @@
             </select>
           </div>
 
+          <!-- Reassignment (Admin / Supervisor only) -->
+          @if (canReassign()) {
+            <div class="reassign-section">
+              <div class="reassign-header" (click)="showReassign.set(!showReassign())">
+                <span class="form-label" style="cursor:pointer">
+                  👤 Reasignar Agente
+                  @if (sc.desbordeIA) { <span class="badge badge-warning" style="font-size:0.65rem">Desborde IA activo</span> }
+                </span>
+                <span class="chevron">{{ showReassign() ? '▲' : '▼' }}</span>
+              </div>
+              @if (showReassign()) {
+                <div class="reassign-form">
+                  <select class="form-select" [(ngModel)]="reassignTarget">
+                    <option value="">— Seleccionar agente —</option>
+                    @for (agent of store.availableAgents; track agent) {
+                      <option [value]="agent">{{ agent }}</option>
+                    }
+                  </select>
+                  <button class="btn-accent btn-sm" (click)="confirmReassign()" [disabled]="!reassignTarget">
+                    ✓ Confirmar Reasignación
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="agent-readonly">
+              <span class="form-label">Agente Asignado</span>
+              <p class="agent-name-text">{{ sc.assignedTo ?? 'Sin asignar' }}</p>
+              @if (sc.desbordeIA) {
+                <p class="agent-ia-note">Asignado automáticamente por M4 IA</p>
+              }
+            </div>
+          }
+
           <!-- Add Note -->
-          <div class="form-group mb-3">
+          <div class="form-group mb-3" style="margin-top: 1rem;">
             <label class="form-label">Agregar Nota</label>
             <textarea
               class="form-input"
@@ -178,6 +247,23 @@
               }
             </div>
           }
+
+          <!-- Activity Log -->
+          <div class="activity-section">
+            <p class="form-label mb-2">Actividad Reciente (M5)</p>
+            @for (entry of activityLog; track entry.time) {
+              <div class="activity-entry">
+                <div class="ae-user" [class.ae-ia]="entry.user.includes('IA') || entry.user === 'Supervisor'">
+                  {{ entry.user[0] }}
+                </div>
+                <div class="ae-body">
+                  <p class="ae-action">{{ entry.action }} — <em>{{ entry.target }}</em></p>
+                  <p class="ae-user-name">{{ entry.user }} · {{ entry.time }}</p>
+                </div>
+              </div>
+            }
+          </div>
+
         </div>
       }
     }
