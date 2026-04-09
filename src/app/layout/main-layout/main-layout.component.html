@@ -55,10 +55,10 @@
         <!-- User Info -->
         <div class="user-info">
           <div class="user-details">
-            <span class="user-name">{{ user()?.name }}</span>
-            <span class="user-role">{{ user()?.role }}</span>
+            <span class="user-name">{{ session()?.username }}</span>
+            <span class="user-role">{{ session()?.roles?.[0] }}</span>
           </div>
-          <div class="avatar">{{ userInitials() }}</div>
+          <div class="avatar">{{ userInitials() }}</div>  
         </div>
 
         <!-- Logout -->

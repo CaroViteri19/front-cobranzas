@@ -19,7 +19,7 @@ export class MainLayoutComponent {
   private auth   = inject(AuthService);
   private router = inject(Router);
 
-  readonly user      = this.auth.user;
+  readonly session   = this.auth.session;
   readonly collapsed = signal(false);
 
   readonly navItems: NavItem[] = [
@@ -35,7 +35,7 @@ export class MainLayoutComponent {
   ];
 
   readonly userInitials = computed(() => {
-    const name = this.user()?.name ?? '';
+    const name = this.session()?.username ?? '';
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   });
 

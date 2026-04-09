@@ -1,8 +1,9 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService } from '../../core/services/store.service';
 import { AssignmentRule, CaseStatus } from '../../core/models';
+import { UserService, RoleOption } from '../../core/services/user.service';
 
 export type SettingsTab =
   'policies' | 'case-statuses' | 'file-structure' | 'users' | 'assignment-rules' | 'security';
@@ -59,8 +60,9 @@ type PermLevel = 'full' | 'read' | 'none';
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css'
 })
-export class SettingsComponent {
-  store = inject(StoreService);
+export class SettingsComponent implements OnInit {
+  store       = inject(StoreService);
+  userService = inject(UserService);
 
   activeTab = signal<SettingsTab>('policies');
   saving    = signal(false);
@@ -286,21 +288,78 @@ export class SettingsComponent {
     { id: 'U-007', name: 'Carlos Mejía',     email: 'carlos@fintra.co',     role: 'Auditor',       status: 'Activo',   lastLogin: '05 Abr 2026, 14:20' },
   ]);
 
-  showNewUser = signal(false);
-  newUser = { name: '', email: '', role: 'Agente' };
+  // ── Gestión de usuarios ────────────────────────────────────────────────────
+  showNewUser    = signal(false);
+  savingUser     = signal(false);
+  userError      = signal('');
+  availableRoles = signal<RoleOption[]>([]);
 
-  addUser(): void {
-    if (!this.newUser.name || !this.newUser.email) return;
-    this.users.update(list => [...list, {
-      id: `U-${Date.now()}`,
-      name: this.newUser.name,
-      email: this.newUser.email,
-      role: this.newUser.role,
-      status: 'Activo',
-      lastLogin: 'Nunca'
-    }]);
-    this.newUser = { name: '', email: '', role: 'Agente' };
-    this.showNewUser.set(false);
+  newUser = {
+    fullName:  '',
+    username:  '',
+    email:     '',
+    password:  '',
+    roleId:    0     // ID del rol seleccionado
+  };
+
+  ngOnInit(): void {
+    // Cargar roles disponibles desde el backend al iniciar el componente
+    this.userService.getRoles()
+      .then(roles => this.availableRoles.set(roles))
+      .catch(() => {
+        // Si falla (ej: token expirado) se usan nombres como fallback visual
+        this.availableRoles.set([
+          { id: 0, name: 'ADMINISTRADOR', description: '' },
+          { id: 0, name: 'SUPERVISOR',    description: '' },
+          { id: 0, name: 'AGENTE',        description: '' },
+          { id: 0, name: 'AUDITOR',       description: '' },
+        ]);
+      });
+  }
+
+  async addUser(): Promise<void> {
+    this.userError.set('');
+
+    if (!this.newUser.fullName || !this.newUser.username ||
+        !this.newUser.email    || !this.newUser.password) {
+      this.userError.set('Todos los campos son obligatorios.');
+      return;
+    }
+
+    this.savingUser.set(true);
+    try {
+      // 1. Registrar el usuario (queda con rol USER por defecto)
+      const created = await this.userService.register({
+        fullName: this.newUser.fullName,
+        username: this.newUser.username,
+        email:    this.newUser.email,
+        password: this.newUser.password,
+      });
+
+      // 2. Asignar el rol real si se seleccionó uno
+      if (this.newUser.roleId) {
+        await this.userService.assignRole(created.id, this.newUser.roleId);
+      }
+
+      // 3. Agregar a la lista local para reflejar el cambio en la UI
+      const roleName = this.availableRoles().find(r => r.id === this.newUser.roleId)?.name ?? 'USER';
+      this.users.update(list => [...list, {
+        id:        String(created.id),
+        name:      created.fullName,
+        email:     created.email,
+        role:      roleName,
+        status:    'Activo',
+        lastLogin: 'Nunca'
+      }]);
+
+      // 4. Limpiar formulario
+      this.newUser = { fullName: '', username: '', email: '', password: '', roleId: 0 };
+      this.showNewUser.set(false);
+    } catch (err: any) {
+      this.userError.set(err?.error?.message ?? 'Error al crear el usuario. Verifica los datos.');
+    } finally {
+      this.savingUser.set(false);
+    }
   }
 
   toggleUserStatus(id: string): void {
