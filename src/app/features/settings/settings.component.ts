@@ -334,12 +334,9 @@ export class SettingsComponent implements OnInit {
         username: this.newUser.username,
         email:    this.newUser.email,
         password: this.newUser.password,
+        role: this.newUser.roleId,
       });
 
-      // 2. Asignar el rol real si se seleccionó uno
-      if (this.newUser.roleId) {
-        await this.userService.assignRole(created.id, this.newUser.roleId);
-      }
 
       // 3. Agregar a la lista local para reflejar el cambio en la UI
       const roleName = this.availableRoles().find(r => r.id === this.newUser.roleId)?.name ?? 'USER';

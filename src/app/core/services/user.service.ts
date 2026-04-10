@@ -17,6 +17,7 @@ export interface RegisterRequest {
   password: string;    // mínimo 12 caracteres y al menos 1 carácter especial
   fullName: string;
   email: string;
+  role: number;
 }
 
 /** Respuesta de POST /api/v1/auth/register. */
@@ -68,12 +69,5 @@ export class UserService {
    * @param userId ID del usuario (devuelto por register()).
    * @param roleId ID del rol (devuelto por getRoles()).
    */
-  async assignRole(userId: number, roleId: number): Promise<string> {
-    return firstValueFrom(
-      this.http.post<string>(`${this.apiUrl}/role`, {
-        idUser: userId,
-        role:   [roleId]
-      })
-    );
-  }
+
 }
