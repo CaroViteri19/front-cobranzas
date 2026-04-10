@@ -13,8 +13,8 @@ export class LoginComponent {
   private auth   = inject(AuthService);
   private router = inject(Router);
 
-  email    = signal('admin@fintra.co');
-  password = signal('admin123');
+  email    = signal('admin@coovitel.co');
+  password = signal('Admin@coovitel1!');
   error    = signal('');
   loading  = signal(false);
 

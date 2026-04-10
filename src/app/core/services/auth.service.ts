@@ -62,9 +62,11 @@ export class AuthService {
    * Almacena la sesión en memoria y en localStorage.
    */
   async login(username: string, password: string): Promise<AuthSession> {
+    // Normalizar email igual que el backend
+    const email = username.trim().toLowerCase();
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email:username, password })
+        this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password })
       );
 
       const session: AuthSession = {
@@ -76,8 +78,21 @@ export class AuthService {
       this._session.set(session);
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       return session;
-    } catch {
-      throw new Error('Credenciales incorrectas o error de servidor');
+    } catch (err: any) {
+      const status: number | undefined = err?.status;
+      const msg: string =
+        err?.error?.message ?? err?.error?.error ?? err?.message ?? '';
+
+      if (status === 0) {
+        throw new Error('No se puede conectar con el servidor. ¿Está el backend corriendo en el puerto 8080?');
+      }
+      if (status === 401 || status === 403) {
+        throw new Error('Credenciales incorrectas. Verifica tu email y contraseña.');
+      }
+      if (status === 400) {
+        throw new Error(`Datos inválidos: ${msg || 'revisa email y contraseña'}`);
+      }
+      throw new Error(msg || `Error ${status ?? 'desconocido'} al iniciar sesión`);
     }
   }
 

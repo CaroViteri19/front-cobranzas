@@ -299,65 +299,94 @@ export class SettingsComponent implements OnInit {
     username:  '',
     email:     '',
     password:  '',
-    roleId:    0     // ID del rol seleccionado
+    roleId:    '',    // ID del rol seleccionado
   };
 
-  ngOnInit(): void {
-    // Cargar roles disponibles desde el backend al iniciar el componente
-    this.userService.getRoles()
-      .then(roles => this.availableRoles.set(roles))
-      .catch(() => {
-        // Si falla (ej: token expirado) se usan nombres como fallback visual
-        this.availableRoles.set([
-          { id: 0, name: 'ADMINISTRADOR', description: '' },
-          { id: 0, name: 'SUPERVISOR',    description: '' },
-          { id: 0, name: 'AGENTE',        description: '' },
-          { id: 0, name: 'AUDITOR',       description: '' },
-        ]);
-      });
+ ngOnInit(): void {
+  this.userService.getRoles()
+    .then(roles => {
+      console.log('Roles desde backend:', roles);
+      this.availableRoles.set(roles);
+    })
+    .catch(() => {
+      // fallback con IDs únicos (NO más 0)
+      this.availableRoles.set([
+        { id: 1, name: 'ADMINISTRADOR', description: '' },
+        { id: 2, name: 'SUPERVISOR',    description: '' },
+        { id: 3, name: 'AGENTE',        description: '' },
+        { id: 4, name: 'AUDITOR',       description: '' },
+      ]);
+    });
+}
+
+ async addUser(): Promise<void> {
+  this.userError.set('');
+
+  // ✅ Validación completa
+  if (!this.newUser.fullName || !this.newUser.username ||
+      !this.newUser.email    || !this.newUser.password) {
+    this.userError.set('Todos los campos son obligatorios.');
+    return;
   }
 
-  async addUser(): Promise<void> {
-    this.userError.set('');
+  if (!this.newUser.roleId) {
+    this.userError.set('Debes seleccionar un rol.');
+    return;
+  }
 
-    if (!this.newUser.fullName || !this.newUser.username ||
-        !this.newUser.email    || !this.newUser.password) {
-      this.userError.set('Todos los campos son obligatorios.');
-      return;
-    }
+  this.savingUser.set(true);
 
-    this.savingUser.set(true);
-    try {
-      // 1. Registrar el usuario (queda con rol USER por defecto)
-      const created = await this.userService.register({
-        fullName: this.newUser.fullName,
-        username: this.newUser.username,
-        email:    this.newUser.email,
-        password: this.newUser.password,
-        role: this.newUser.roleId,
-      });
+  try {
+    const created = await this.userService.register({
+      fullName: this.newUser.fullName,
+      username: this.newUser.username,
+      email:    this.newUser.email,
+      password: this.newUser.password,
+      role:     Number(this.newUser.roleId),   // campo correcto + conversión a número
+    });
 
+    // Nombre del rol para la UI
+    const roleName =
+      this.availableRoles().find(r => r.id === Number(this.newUser.roleId))?.name ?? 'AGENTE';
 
-      // 3. Agregar a la lista local para reflejar el cambio en la UI
-      const roleName = this.availableRoles().find(r => r.id === this.newUser.roleId)?.name ?? 'USER';
-      this.users.update(list => [...list, {
+    // ✅ Actualizar UI
+    this.users.update(list => [
+      ...list,
+      {
         id:        String(created.id),
         name:      created.fullName,
         email:     created.email,
         role:      roleName,
         status:    'Activo',
         lastLogin: 'Nunca'
-      }]);
+      }
+    ]);
 
-      // 4. Limpiar formulario
-      this.newUser = { fullName: '', username: '', email: '', password: '', roleId: 0 };
-      this.showNewUser.set(false);
-    } catch (err: any) {
-      this.userError.set(err?.error?.message ?? 'Error al crear el usuario. Verifica los datos.');
-    } finally {
-      this.savingUser.set(false);
+    // ✅ Reset limpio
+    this.newUser = {
+      fullName: '',
+      username: '',
+      email: '',
+      password: '',
+      roleId: '',
+    };
+
+    this.showNewUser.set(false);
+
+  } catch (err: any) {
+    console.error('Error backend:', err);
+
+    // ✅ Mejor manejo de errores
+    if (err?.error?.message) {
+      this.userError.set(err.error.message);
+    } else {
+      this.userError.set('Error al crear el usuario. Verifica los datos.');
     }
+
+  } finally {
+    this.savingUser.set(false);
   }
+}
 
   toggleUserStatus(id: string): void {
     this.users.update(list => list.map(u =>
