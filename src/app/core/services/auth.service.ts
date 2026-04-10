@@ -64,7 +64,7 @@ export class AuthService {
   async login(username: string, password: string): Promise<AuthSession> {
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.apiUrl}/login`, { username, password })
+        this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email:username, password })
       );
 
       const session: AuthSession = {

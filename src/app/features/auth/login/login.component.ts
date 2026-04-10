@@ -24,6 +24,7 @@ export class LoginComponent {
     this.loading.set(true);
 
     try {
+      console.log(`Intentando login con email=${this.email()} y password=${this.password()}`);
       await this.auth.login(this.email(), this.password());
       this.router.navigate(['/dashboard']);
     } catch (err: any) {
