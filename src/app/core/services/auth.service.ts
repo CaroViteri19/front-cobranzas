@@ -18,18 +18,26 @@ export interface AuthSession {
   roles: string[];       // en mayúsculas tal como llegan del backend
 }
 
-const SESSION_KEY = 'auth_session';
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http   = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/api/v1/auth';
+  private readonly SESSION_KEY = 'auth_session';
+  private readonly TAB_ID_KEY = 'auth_tab_id';
+  private readonly CLOSE_MARKER_KEY = 'auth_tab_closed_marker';
+  private readonly CLOSE_MARKER_TTL_MS = 30_000;
+
+  private readonly tabId = this.ensureTabId();
 
   /**
    * Señal interna con la sesión activa.
-   * Se inicializa desde localStorage para sobrevivir recargas de página.
+   * Se hidrata desde sessionStorage para sobrevivir recargas en la misma pestaña.
    */
   private _session = signal<AuthSession | null>(this.loadSession());
+
+  constructor() {
+    this.registerCloseMarker();
+  }
 
   /** Sesión de solo lectura expuesta a los consumidores. */
   readonly session = this._session.asReadonly();
@@ -59,7 +67,7 @@ export class AuthService {
 
   /**
    * Inicia sesión contra el backend.
-   * Almacena la sesión en memoria y en localStorage.
+   * Almacena la sesión en memoria y en sessionStorage (solo por pestaña).
    */
   async login(username: string, password: string): Promise<AuthSession> {
     // Normalizar email igual que el backend
@@ -76,7 +84,8 @@ export class AuthService {
       };
 
       this._session.set(session);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
+      this.clearCloseMarker();
       return session;
     } catch (err: any) {
       const status: number | undefined = err?.status;
@@ -99,17 +108,94 @@ export class AuthService {
   /** Cierra sesión y limpia el almacenamiento local. */
   logout(): void {
     this._session.set(null);
-    localStorage.removeItem(SESSION_KEY);
+    // Limpieza defensiva por si quedaron tokens guardados de versiones anteriores.
+    localStorage.removeItem(this.SESSION_KEY);
+    sessionStorage.removeItem(this.SESSION_KEY);
+    sessionStorage.removeItem(this.TAB_ID_KEY);
+    this.clearCloseMarker();
   }
 
   // ── helpers privados ──────────────────────────────────────────────────────
-
   private loadSession(): AuthSession | null {
     try {
-      const raw = localStorage.getItem(SESSION_KEY);
+      if (this.wasTabRestoredAfterClose()) {
+        sessionStorage.removeItem(this.SESSION_KEY);
+        return null;
+      }
+
+      const raw = sessionStorage.getItem(this.SESSION_KEY);
       return raw ? (JSON.parse(raw) as AuthSession) : null;
     } catch {
       return null;
     }
+  }
+
+  private ensureTabId(): string {
+    const existing = sessionStorage.getItem(this.TAB_ID_KEY);
+    if (existing) return existing;
+
+    const id = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`);
+    sessionStorage.setItem(this.TAB_ID_KEY, id);
+    return id;
+  }
+
+  private registerCloseMarker(): void {
+    window.addEventListener('pagehide', () => {
+      this.markTabClosing();
+    });
+  }
+
+  private markTabClosing(): void {
+    const payload = JSON.stringify({
+      tabId: this.tabId,
+      closedAt: Date.now(),
+    });
+    localStorage.setItem(this.CLOSE_MARKER_KEY, payload);
+  }
+
+  private clearCloseMarker(): void {
+    const markerRaw = localStorage.getItem(this.CLOSE_MARKER_KEY);
+    if (!markerRaw) return;
+
+    try {
+      const marker = JSON.parse(markerRaw) as { tabId?: string };
+      if (marker.tabId === this.tabId) {
+        localStorage.removeItem(this.CLOSE_MARKER_KEY);
+      }
+    } catch {
+      localStorage.removeItem(this.CLOSE_MARKER_KEY);
+    }
+  }
+
+  private wasTabRestoredAfterClose(): boolean {
+    const markerRaw = localStorage.getItem(this.CLOSE_MARKER_KEY);
+    if (!markerRaw) return false;
+
+    try {
+      const marker = JSON.parse(markerRaw) as { tabId?: string; closedAt?: number };
+      const isSameTab = marker.tabId === this.tabId;
+      const hasFreshMarker = typeof marker.closedAt === 'number'
+        && (Date.now() - marker.closedAt) <= this.CLOSE_MARKER_TTL_MS;
+      const navType = this.getNavigationType();
+      const isReload = navType === 'reload';
+
+      if (isSameTab && hasFreshMarker && !isReload) {
+        localStorage.removeItem(this.CLOSE_MARKER_KEY);
+        return true;
+      }
+
+      if (isSameTab) {
+        localStorage.removeItem(this.CLOSE_MARKER_KEY);
+      }
+      return false;
+    } catch {
+      localStorage.removeItem(this.CLOSE_MARKER_KEY);
+      return false;
+    }
+  }
+
+  private getNavigationType(): string {
+    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    return navEntry?.type ?? 'navigate';
   }
 }
