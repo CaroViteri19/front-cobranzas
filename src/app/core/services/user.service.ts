@@ -34,8 +34,8 @@ export interface RegisterResponse {
  * Servicio para gestión de usuarios: registro y asignación de roles.
  *
  * Flujo de creación de usuario:
- *   1. register()     → crea el usuario con rol USER por defecto
- *   2. assignRole()   → asigna el rol definitivo usando el ID devuelto
+ *   - register() crea el usuario con el rol seleccionado directamente.
+ *   - assignRole() permite cambiar el rol de un usuario ya existente (solo ADMINISTRADOR).
  */
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -53,8 +53,7 @@ export class UserService {
   }
 
   /**
-   * Registra un nuevo usuario en el backend.
-   * El usuario se crea con rol USER por defecto; usa assignRole() para cambiar el rol.
+   * Registra un nuevo usuario en el backend con el rol indicado en `data.role`.
    */
   async register(data: RegisterRequest): Promise<RegisterResponse> {
     return firstValueFrom(
@@ -63,11 +62,15 @@ export class UserService {
   }
 
   /**
-   * Asigna un rol a un usuario ya registrado.
+   * Cambia el rol de un usuario ya registrado.
    * Requiere token de ADMINISTRADOR.
    *
-   * @param userId ID del usuario (devuelto por register()).
-   * @param roleId ID del rol (devuelto por getRoles()).
+   * @param userId ID del usuario.
+   * @param roleId ID del nuevo rol.
    */
-
+  async assignRole(userId: number, roleId: number): Promise<string> {
+    return firstValueFrom(
+      this.http.post<string>(`${this.apiUrl}/role`, { idUser: userId, role: [roleId] })
+    );
+  }
 }

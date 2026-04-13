@@ -144,6 +144,57 @@ tr.selected td { background: rgba(16,152,155,0.05); }
 .note-text   { font-size: 0.8rem; color: #475569; line-height: 1.4; }
 
 /* ═══════════════════════════════════════════
+   COLAPSABLE — patrón compartido
+═══════════════════════════════════════════ */
+.collapse-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0 12px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 0.75rem;
+  gap: 8px;
+}
+.collapse-trigger:hover .card-title { color: var(--brand-accent); }
+
+.collapse-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.collapse-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: var(--brand-bg);
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+
+.collapse-btn {
+  width: 28px; height: 28px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.collapse-btn:hover { background: var(--brand-bg); color: var(--brand-primary); }
+
+/* Panel de detalle: header colapsable solo visible en mobile */
+.detail-collapse-trigger { display: none; }
+
+/* ═══════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════ */
 
@@ -157,68 +208,100 @@ tr.selected td { background: rgba(16,152,155,0.05); }
   .module-header { flex-direction: column; gap: 10px; }
   .header-actions { width: 100%; }
   .filter-select  { max-width: 100%; flex: 1; }
-
-  /* Score cell más compacto */
-  .score-cell .progress-bar { width: 36px; }
   .smc-value { font-size: 1.35rem; }
 }
 
 /* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
-  /* Tabla: ocultar columnas menos críticas */
-  .data-table th:nth-child(2),   /* Score IA */
-  .data-table td:nth-child(2),
-  .data-table th:nth-child(6),   /* Prioridad */
-  .data-table td:nth-child(6) {
-    display: none;
+  /* TABLA → CARD VIEW */
+  .table-wrapper { overflow-x: visible; }
+
+  .table-wrapper .data-table          { display: block; min-width: 0; }
+  .table-wrapper .data-table thead    { display: none; }
+  .table-wrapper .data-table tbody    { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .table-wrapper .data-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 0.5rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .table-wrapper .data-table tr:hover,
+  .table-wrapper .data-table tr.selected { background: rgba(16,152,155,0.06); }
+
+  .table-wrapper .data-table td {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+    border: none;
+    font-size: 0.8rem;
+  }
+  /* Primera celda (Asociado) ocupa toda la fila */
+  .table-wrapper .data-table td:first-child {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  /* Última celda (Asignación) ocupa toda la fila */
+  .table-wrapper .data-table td:last-child {
+    grid-column: 1 / -1;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 6px;
+    margin-top: 2px;
   }
 
-  /* Reducir padding de celdas */
-  .data-table th,
-  .data-table td {
-    padding: 8px 10px;
-    font-size: 0.75rem;
+  .table-wrapper .data-table td::before {
+    content: attr(data-label);
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
   }
+  .table-wrapper .data-table td:first-child::before,
+  .table-wrapper .data-table td:last-child::before { display: none; }
 
-  .assoc-name { font-size: 0.8rem; }
-  .assoc-doc  { font-size: 0.65rem; }
-  .balance    { font-size: 0.78rem; }
+  /* Score cell en card */
+  .score-cell .progress-bar { width: 36px; }
 
-  /* Detail stats: apila en 2 columnas */
-  .detail-stats {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .ds { min-width: calc(50% - 0.5rem); }
-
-  /* Header card row: apila */
-  .card-header-row { flex-wrap: wrap; gap: 6px; }
-
-  .smc-value { font-size: 1.25rem; }
+  /* Stats mini */
+  .smc-value      { font-size: 1.25rem; }
   .stat-mini-card { padding: 1rem; }
+
+  /* Detail stats: wrap en 2 cols */
+  .detail-stats { flex-wrap: wrap; gap: 0.5rem; }
+  .ds           { min-width: calc(50% - 0.5rem); }
+
+  /* Panel de detalle: mostrar trigger colapsable */
+  .detail-collapse-trigger { display: flex; }
+
+  .card-header-row { flex-wrap: wrap; gap: 6px; }
 }
 
 /* ── Small mobile (≤ 480px) ── */
 @media (max-width: 480px) {
-  /* Solo columnas esenciales en tabla */
-  .data-table th:nth-child(3),   /* Valor */
-  .data-table td:nth-child(3),
-  .data-table th:nth-child(4),   /* Mora */
-  .data-table td:nth-child(4) {
-    display: none;
+  /* Cards de casos en columna única */
+  .table-wrapper .data-table tr {
+    grid-template-columns: 1fr;
+  }
+  .table-wrapper .data-table td:last-child {
+    grid-column: 1;
   }
 
-  .data-table th,
-  .data-table td {
-    padding: 6px 8px;
-    font-size: 0.7rem;
-  }
-
-  /* Role switcher: apila label encima */
-  .role-switcher { flex-wrap: wrap; }
-
-  .detail-header { flex-wrap: wrap; }
-  .detail-name { font-size: 0.9rem; }
+  .role-switcher  { flex-wrap: wrap; }
+  .detail-header  { flex-wrap: wrap; }
+  .detail-name    { font-size: 0.9rem; }
+  .header-actions { flex-direction: column; }
 }
 
 /* ─── Role switcher ───────────────────────── */

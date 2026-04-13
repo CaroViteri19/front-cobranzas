@@ -172,8 +172,9 @@
 .topbar-left  { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 .topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-/* Hamburger — solo visible en móvil */
-.mobile-menu-btn { display: none; }
+/* Hamburger — solo visible en móvil.
+   Especificidad más alta para que no sea sobreescrito por .icon-btn { display:flex }  */
+.topbar-left .mobile-menu-btn { display: none; }
 
 .hamburger-icon {
   display: flex;
@@ -334,7 +335,7 @@
   .sidebar-toggle.desktop-only { display: none; }
 
   /* Mostrar hamburger, ocultar buscador en móvil pequeño */
-  .mobile-menu-btn { display: flex; }
+  .topbar-left .mobile-menu-btn { display: flex; }
 
   .page-content { padding: 1rem; }
   .topbar { padding: 0 1rem; height: 56px; min-height: 56px; }

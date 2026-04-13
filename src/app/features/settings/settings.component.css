@@ -1173,7 +1173,10 @@ code.ff-type { font-size: 0.75rem; color: #94a3b8; background: #f1f5f9; padding:
 .perm-matrix-wrapper {
   border-radius: 12px;
   border: 1px solid rgba(10,59,78,0.1);
-  overflow: hidden;
+  /* overflow:hidden rompía position:sticky — se usa overflow-x:auto */
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 2px 8px rgba(10,59,78,0.06);
 }
 
@@ -1597,4 +1600,309 @@ code.ff-type { font-size: 0.75rem; color: #94a3b8; background: #f1f5f9; padding:
 /* Also clean up the header — no right column needed */
 .settings-header {
   padding-bottom: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   COLAPSABLE — patrón compartido en Settings
+════════════════════════════════════════════════════════ */
+.collapse-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 0.75rem;
+  gap: 8px;
+}
+.collapse-trigger:hover .section-sub { color: var(--brand-accent); }
+
+.collapse-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.collapse-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: var(--brand-bg);
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.collapse-btn {
+  width: 28px; height: 28px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.collapse-btn:hover { background: var(--brand-bg); color: var(--brand-primary); }
+
+/* Botón colapsar dentro del header de permisos */
+.perm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Scroll wrappers — evitan que el contenido rompa el layout ── */
+.tm-scroll-wrapper,
+.ut-scroll-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-lg);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE GLOBAL SETTINGS
+════════════════════════════════════════════════════════ */
+
+/* ── Tabs: scroll horizontal en móvil ── */
+@media (max-width: 768px) {
+  .settings-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    padding: 4px;
+    border-radius: var(--radius-lg);
+  }
+  .settings-tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn { padding: 8px 12px; font-size: 0.78rem; flex-shrink: 0; }
+
+  /* Formularios en columna única */
+  .form-row-3, .form-row-4 { grid-template-columns: 1fr; }
+
+  /* AI controls: wrap */
+  .ai-controls { flex-wrap: wrap; gap: 6px; }
+  .ai-grid     { grid-template-columns: 1fr !important; }
+
+  /* Contact grid */
+  .contact-grid { grid-template-columns: 1fr !important; }
+
+  /* Risk table: convertir a cards */
+  .risk-table       { display: flex; flex-direction: column; gap: 0.5rem; }
+  .risk-table-header { display: none; }
+  .risk-table-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    align-items: center;
+  }
+  .risk-level-cell { grid-column: 1 / -1; }
+  .risk-action     { grid-column: 1 / -1; font-style: italic; font-size: 0.78rem; color: #64748b; }
+
+  /* File fields table: cards */
+  .file-fields-table { overflow-x: auto; }
+  .ff-header         { display: none; }
+  .ff-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 4px;
+  }
+  .ff-desc { font-size: 0.78rem; color: #64748b; }
+
+  /* ── Matriz de transición: cards en móvil ── */
+  .transition-matrix     { display: flex; flex-direction: column; gap: 0.5rem; }
+  .tm-header             { display: none; }
+  .tm-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .tm-row-protected { background: #fff8f0; border-color: #fed7aa; }
+  .tm-status-cell   { flex-direction: row; align-items: center; }
+  .tm-type-cell     { display: flex; }
+  .tm-flows-cell    { display: flex; flex-direction: column; gap: 4px; }
+  .tm-col-center    { display: flex; align-items: center; gap: 8px; }
+  .tm-col-center::before {
+    content: attr(data-label);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    min-width: 80px;
+  }
+
+  /* ── Tabla de usuarios: cards en móvil ── */
+  .users-table { display: flex; flex-direction: column; gap: 0.5rem; }
+  .ut-header   { display: none; }
+  .ut-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    align-items: start;
+  }
+  /* Name cell ocupa ancho completo */
+  .ut-name-cell {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  /* Actions ocupa ancho completo */
+  .ut-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+  }
+  .ut-actions .btn-secondary { flex: 1; text-align: center; }
+
+  /* data-label para celdas individuales */
+  .ut-email::before  { content: "Correo: ";    font-size: 0.65rem; font-weight: 700; color: #94a3b8; display: block; text-transform: uppercase; }
+  .ut-role::before   { content: "Rol: ";       font-size: 0.65rem; font-weight: 700; color: #94a3b8; display: block; text-transform: uppercase; }
+  .ut-login::before  { content: "Último acc:"; font-size: 0.65rem; font-weight: 700; color: #94a3b8; display: block; text-transform: uppercase; }
+  .ut-status::before { content: "Estado: ";    font-size: 0.65rem; font-weight: 700; color: #94a3b8; display: block; text-transform: uppercase; }
+
+  .ut-email, .ut-login { font-size: 0.78rem; word-break: break-all; }
+
+  /* ── Section headers: botones full-width en mobile ── */
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .section-header .btn-accent,
+  .section-header .btn-secondary,
+  .section-header .btn-primary {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Contact header: badge + botón — wrap */
+  .contact-header-right {
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+  .contact-header-right .btn-accent {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Assignment actions: apilar botones en columna */
+  .ar-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .ar-actions > button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* perm-save-bar: stack en tablet */
+  .perm-save-bar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .psb-btn { width: 100%; justify-content: center; }
+
+  /* perm-header-actions: horizontal en tablet */
+  .perm-header-actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .perm-reset-btn { flex: 1; justify-content: center; text-align: center; }
+
+  /* ── Matriz de permisos: scroll horizontal + col sticky ── */
+  .perm-matrix-wrapper {
+    /* sin border-radius para evitar clipping del sticky en Safari */
+    border-radius: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overflow-y: visible;
+  }
+  .perm-matrix-table { min-width: 500px; }
+
+  /* Primera columna sticky — módulo */
+  .pmt-module-head {
+    position: sticky;
+    left: 0;
+    z-index: 3;                             /* encima de las celdas del cuerpo */
+    background: var(--brand-dark, #001822); /* mantener color de header */
+    box-shadow: 2px 0 6px rgba(0,0,0,0.14);
+  }
+  .pmt-module-cell {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #ffffff;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.08);
+  }
+  /* Fila impar: fondo correcto en la celda sticky */
+  .pmt-row-odd .pmt-module-cell { background: #FAFBFC; }
+  /* Hover: fondo correcto en la celda sticky */
+  .perm-matrix-table tbody tr:hover .pmt-module-cell {
+    background: rgba(16,152,155,0.04);
+  }
+
+  /* Chips de permiso: más compactos en mobile */
+  .pmt-cell { padding: 6px 4px; }
+  .pmt-chip { padding: 3px 6px; gap: 4px; }
+  .pmt-chip-text { font-size: 0.68rem; }
+  .pmt-role-name { font-size: 0.72rem; }
+
+  /* Legend bar: wrap */
+  .perm-legend-bar { flex-wrap: wrap; gap: 6px; }
+
+  /* Section header permisos */
+  .perm-section-header { flex-direction: column; gap: 8px; }
+}
+
+/* ── Small mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .ut-row { grid-template-columns: 1fr; }
+  .ut-actions .btn-secondary { width: 100%; }
+
+  .risk-table-row { grid-template-columns: 1fr; }
+  .risk-action    { grid-column: 1; }
+
+  .tab-btn { padding: 7px 10px; font-size: 0.72rem; }
+
+  .perm-save-bar { flex-direction: column; gap: 10px; }
+  .psb-btn       { width: 100%; justify-content: center; }
 }

@@ -171,7 +171,55 @@
 .risk-pct   { font-size: 0.7rem; color: #94a3b8; }
 
 /* ── Table Cells ── */
-.table-wrapper { overflow-x: auto; }
+.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ═══════════════════════════════════════════
+   COLAPSABLE
+═══════════════════════════════════════════ */
+.collapse-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0 12px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 0.75rem;
+  gap: 8px;
+}
+.collapse-trigger:hover .card-title { color: var(--brand-accent); }
+
+.collapse-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.collapse-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: var(--brand-bg);
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+
+.collapse-btn {
+  width: 28px; height: 28px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.collapse-btn:hover { background: var(--brand-bg); color: var(--brand-primary); }
 
 .assoc-info { display: flex; align-items: center; gap: 10px; }
 
@@ -203,3 +251,77 @@
 .risk-medio   { color: #3b82f6; }
 .risk-alto    { color: #f59e0b; }
 .risk-crítico { color: #ef4444; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+
+/* ── Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+  .module-header { flex-direction: column; gap: 10px; }
+  .ai-badge      { align-self: flex-start; }
+  .chart-area    { height: 180px; }
+}
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  /* Gráficos: apilar en columna */
+  .grid-2 { grid-template-columns: 1fr !important; }
+  .chart-area { height: 160px; }
+
+  /* TABLA DE PERFILAMIENTO → CARD VIEW */
+  .table-wrapper { overflow-x: visible; }
+
+  .profiling-table          { display: block; min-width: 0; }
+  .profiling-table thead    { display: none; }
+  .profiling-table tbody    { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .profiling-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  .profiling-table td {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+    border: none;
+    font-size: 0.8rem;
+  }
+  /* Asociado ocupa fila completa */
+  .profiling-table td:first-child {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+
+  .profiling-table td::before {
+    content: attr(data-label);
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+  .profiling-table td:first-child::before { display: none; }
+
+  .score-cell .progress-bar { width: 40px; }
+}
+
+/* ── Small mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .profiling-table tr { grid-template-columns: 1fr; }
+  .profiling-table td:first-child { border-bottom: 1px solid #e2e8f0; }
+  .chart-area { height: 140px; }
+  .bar-label  { font-size: 0.55rem; }
+}

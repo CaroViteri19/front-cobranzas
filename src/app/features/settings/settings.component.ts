@@ -348,6 +348,13 @@ export class SettingsComponent implements OnInit {
     return;
   }
 
+  // Validación de contraseña: mínimo 12 caracteres y al menos 1 carácter especial
+  const passwordRegex = /^(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{12,}$/;
+  if (!passwordRegex.test(this.newUser.password)) {
+    this.userError.set('La contraseña debe tener mínimo 12 caracteres y al menos un carácter especial.');
+    return;
+  }
+
   this.savingUser.set(true);
 
   try {
@@ -359,9 +366,10 @@ export class SettingsComponent implements OnInit {
       role:     Number(this.newUser.roleId),   // campo correcto + conversión a número
     });
 
-    // Nombre del rol para la UI
-    const roleName =
-      this.availableRoles().find(r => r.id === Number(this.newUser.roleId))?.name ?? 'AGENTE';
+    // Nombre del rol para la UI: prioriza la respuesta del backend
+    const roleName = created.roles[0]
+      ?? this.availableRoles().find(r => r.id === Number(this.newUser.roleId))?.name
+      ?? 'AGENTE';
 
     // ✅ Actualizar UI
     this.users.update(list => [

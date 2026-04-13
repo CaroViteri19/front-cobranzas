@@ -362,7 +362,17 @@
           }
         </div>
 
-        <!-- Transition Matrix Table -->
+        <!-- Transition Matrix Table — colapsable -->
+        <div class="collapse-trigger" (click)="transitionTableOpen.update(v => !v)">
+          <h5 class="section-sub" style="font-size:0.875rem">📊 Matriz de Transición</h5>
+          <div class="collapse-right">
+            <span class="collapse-count">{{ store.caseStatuses().length }} estados</span>
+            <button class="collapse-btn" type="button">{{ transitionTableOpen() ? '▲' : '▼' }}</button>
+          </div>
+        </div>
+
+        @if (transitionTableOpen()) {
+        <div class="tm-scroll-wrapper">
         <div class="transition-matrix">
           <div class="tm-header">
             <span>Estado</span>
@@ -467,6 +477,8 @@
             <span>Sin casos registrados — puede eliminarse</span>
           </div>
         </div>
+        </div><!-- /tm-scroll-wrapper -->
+        } <!-- /transitionTableOpen -->
       </div>
 
     </div>
@@ -744,45 +756,58 @@
           </div>
         }
 
-        <div class="users-table">
-          <div class="ut-header">
-            <span>Usuario</span><span>Correo</span><span>Rol</span>
-            <span>Último Acceso</span><span>Estado</span><span>Acciones</span>
+        <!-- Tabla usuarios — colapsable -->
+        <div class="collapse-trigger" (click)="usersTableOpen.update(v => !v)">
+          <h5 class="section-sub" style="font-size:0.875rem">👥 Listado de usuarios</h5>
+          <div class="collapse-right">
+            <span class="collapse-count">{{ users().length }} usuarios</span>
+            <button class="collapse-btn" type="button">{{ usersTableOpen() ? '▲' : '▼' }}</button>
           </div>
-          @for (u of users(); track u.id) {
-            <div class="ut-row">
-              <div class="ut-name-cell">
-                <div class="ut-avatar">{{ u.name[0] + (u.name.split(' ')[1]?.[0] ?? '') }}</div>
-                <div>
-                  <p class="ut-name">{{ u.name }}</p>
-                  <p class="ut-id">{{ u.id }}</p>
+        </div>
+
+        @if (usersTableOpen()) {
+        <div class="ut-scroll-wrapper">
+          <div class="users-table">
+            <div class="ut-header">
+              <span>Usuario</span><span>Correo</span><span>Rol</span>
+              <span>Último Acceso</span><span>Estado</span><span>Acciones</span>
+            </div>
+            @for (u of users(); track u.id) {
+              <div class="ut-row">
+                <div class="ut-name-cell" data-label="Usuario">
+                  <div class="ut-avatar">{{ u.name[0] + (u.name.split(' ')[1]?.[0] ?? '') }}</div>
+                  <div>
+                    <p class="ut-name">{{ u.name }}</p>
+                    <p class="ut-id">{{ u.id }}</p>
+                  </div>
+                </div>
+                <span class="ut-email" data-label="Correo">{{ u.email }}</span>
+                <span class="badge ut-role" data-label="Rol"
+                  [class]="u.role === 'Administrador' ? 'badge-danger' :
+                            u.role === 'Supervisor' ? 'badge-warning' :
+                            u.role === 'Auditor' ? 'badge-accent' : 'badge-info'">
+                  {{ u.role }}
+                </span>
+                <span class="ut-login" data-label="Último acceso">{{ u.lastLogin }}</span>
+                <span class="badge ut-status" data-label="Estado" [class]="u.status === 'Activo' ? 'badge-success' : 'badge-gray'">
+                  {{ u.status }}
+                </span>
+                <div class="ut-actions" data-label="Acciones">
+                  <button class="btn-secondary btn-xs" (click)="toggleUserStatus(u.id)">
+                    {{ u.status === 'Activo' ? '⏸ Desactivar' : '▶ Activar' }}
+                  </button>
+                  <button class="btn-icon-sm danger" (click)="removeUser(u.id)" title="Eliminar">✕</button>
                 </div>
               </div>
-              <span class="ut-email">{{ u.email }}</span>
-              <span class="badge"
-                [class]="u.role === 'Administrador' ? 'badge-danger' :
-                          u.role === 'Supervisor' ? 'badge-warning' :
-                          u.role === 'Auditor' ? 'badge-accent' : 'badge-info'">
-                {{ u.role }}
-              </span>
-              <span class="ut-login">{{ u.lastLogin }}</span>
-              <span class="badge" [class]="u.status === 'Activo' ? 'badge-success' : 'badge-gray'">
-                {{ u.status }}
-              </span>
-              <div class="ut-actions">
-                <button class="btn-secondary btn-xs" (click)="toggleUserStatus(u.id)">
-                  {{ u.status === 'Activo' ? '⏸ Desactivar' : '▶ Activar' }}
-                </button>
-                <button class="btn-icon-sm danger" (click)="removeUser(u.id)" title="Eliminar">✕</button>
-              </div>
-            </div>
-          }
+            }
+          </div>
         </div>
+        } <!-- /usersTableOpen -->
 
         <!-- Permissions Matrix — Editable por Administrador -->
         <div class="permissions-section">
 
-          <!-- Section header -->
+          <!-- Section header — colapsable -->
           <div class="perm-section-header">
             <div>
               <h5 class="perm-section-title">Matriz de Permisos por Módulo</h5>
@@ -791,11 +816,19 @@
                 El rol <strong>Administrador</strong> siempre conserva acceso total.
               </p>
             </div>
-            <button class="perm-reset-btn" (click)="resetPermMatrix()" title="Restaurar valores predeterminados">
-              <span class="perm-reset-icon">↺</span> Restablecer
-            </button>
+            <div class="perm-header-actions">
+              <button class="perm-reset-btn" (click)="resetPermMatrix()" title="Restaurar valores predeterminados">
+                <span class="perm-reset-icon">↺</span> Restablecer
+              </button>
+              <button class="collapse-btn" type="button"
+                (click)="permMatrixOpen.update(v => !v)"
+                [attr.aria-expanded]="permMatrixOpen()">
+                {{ permMatrixOpen() ? '▲' : '▼' }}
+              </button>
+            </div>
           </div>
 
+          @if (permMatrixOpen()) {
           <!-- Legend pills -->
           <div class="perm-legend-bar">
             <span class="pml-label">Nivel de acceso:</span>
@@ -860,6 +893,7 @@
               </tbody>
             </table>
           </div>
+          } <!-- /permMatrixOpen -->
 
           <!-- Save action bar -->
           <div class="perm-save-bar">
