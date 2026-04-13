@@ -32,10 +32,10 @@
   <!-- ═══════════════════════════════════════════════════════
        TAB 1: POLÍTICAS & SCORE
   ══════════════════════════════════════════════════════════ -->
-  @if (activeTab() === 'policies') {
+  <!--@if (activeTab() === 'policies') {
     <div class="tab-content page-enter">
 
-      <!-- 1A: Políticas de Cobranza -->
+      &lt;!&ndash; 1A: Políticas de Cobranza &ndash;&gt;
       <div class="card section-card">
         <div class="section-header">
           <div>
@@ -86,7 +86,7 @@
         </div>
       </div>
 
-      <!-- 1B: Niveles de Riesgo -->
+      &lt;!&ndash; 1B: Niveles de Riesgo &ndash;&gt;
       <div class="card section-card">
         <div class="section-header">
           <div>
@@ -143,7 +143,7 @@
         </div>
       </div>
 
-      <!-- 1C: Parámetros Scoring IA -->
+      &lt;!&ndash; 1C: Parámetros Scoring IA &ndash;&gt;
       <div class="card section-card">
         <div class="section-header">
           <div>
@@ -214,7 +214,7 @@
         </div>
       </div>
 
-      <!-- 1D: Reglas de Contacto Ley 2300 -->
+      &lt;!&ndash; 1D: Reglas de Contacto Ley 2300 &ndash;&gt;
       <div class="card section-card">
         <div class="section-header">
           <div>
@@ -301,13 +301,13 @@
     </div>
   }
 
-  <!-- ═══════════════════════════════════════════════════════
+  &lt;!&ndash; ═══════════════════════════════════════════════════════
        TAB 2: ESTADOS DE CASO — MATRIZ DE TRANSICIÓN
-  ══════════════════════════════════════════════════════════ -->
+  ══════════════════════════════════════════════════════════ &ndash;&gt;
   @if (activeTab() === 'case-statuses') {
     <div class="tab-content page-enter">
 
-      <!-- Transition diagram -->
+      &lt;!&ndash; Transition diagram &ndash;&gt;
       <div class="card section-card">
         <div class="section-header">
           <div>
@@ -349,7 +349,7 @@
           </div>
         }
 
-        <!-- Visual flow strip -->
+        &lt;!&ndash; Visual flow strip &ndash;&gt;
         <div class="flow-diagram">
           @for (s of store.caseStatuses(); track s.id) {
             <div class="flow-node">
@@ -362,7 +362,7 @@
           }
         </div>
 
-        <!-- Transition Matrix Table — colapsable -->
+        &lt;!&ndash; Transition Matrix Table — colapsable &ndash;&gt;
         <div class="collapse-trigger" (click)="transitionTableOpen.update(v => !v)">
           <h5 class="section-sub" style="font-size:0.875rem">📊 Matriz de Transición</h5>
           <div class="collapse-right">
@@ -387,7 +387,7 @@
             @let caseCount = store.caseCountPerStatus()[s.id] ?? 0;
             @let hasCases = caseCount > 0;
             <div class="tm-row" [class.tm-row-protected]="hasCases || s.isInitial || s.isFinal">
-              <!-- Estado -->
+              &lt;!&ndash; Estado &ndash;&gt;
               <div class="tm-status-cell">
                 <div class="st-dot" [style.background]="s.color"></div>
                 <div>
@@ -396,14 +396,14 @@
                 </div>
               </div>
 
-              <!-- Tipo -->
+              &lt;!&ndash; Tipo &ndash;&gt;
               <div class="tm-type-cell">
                 @if (s.isInitial) { <span class="badge badge-info">Inicial</span> }
                 @else if (s.isFinal) { <span class="badge badge-gray">Final</span> }
                 @else { <span class="badge badge-accent">Intermedio</span> }
               </div>
 
-              <!-- Predecesores -->
+              &lt;!&ndash; Predecesores &ndash;&gt;
               <div class="tm-flows-cell">
                 @if ((s.predecessors ?? []).length === 0) {
                   <span class="tm-empty">— Ingreso externo —</span>
@@ -421,7 +421,7 @@
                 }
               </div>
 
-              <!-- Sucesores -->
+              &lt;!&ndash; Sucesores &ndash;&gt;
               <div class="tm-flows-cell">
                 @if ((s.successors ?? []).length === 0) {
                   <span class="tm-empty">— Fin del ciclo —</span>
@@ -439,7 +439,7 @@
                 }
               </div>
 
-              <!-- Casos registrados -->
+              &lt;!&ndash; Casos registrados &ndash;&gt;
               <div class="tm-col-center">
                 @if (hasCases) {
                   <span class="cases-count cases-count-active">{{ caseCount }} caso(s)</span>
@@ -448,7 +448,7 @@
                 }
               </div>
 
-              <!-- Acción -->
+              &lt;!&ndash; Acción &ndash;&gt;
               <div class="tm-col-center tm-actions">
                 @if (s.isInitial || s.isFinal) {
                   <span class="badge badge-gray" title="Estado del sistema — no eliminar">🔒 Sistema</span>
@@ -462,7 +462,7 @@
           }
         </div>
 
-        <!-- Legend -->
+        &lt;!&ndash; Legend &ndash;&gt;
         <div class="tm-legend">
           <div class="tm-legend-item">
             <span class="badge badge-gray">🔒 Sistema</span>
@@ -477,16 +477,16 @@
             <span>Sin casos registrados — puede eliminarse</span>
           </div>
         </div>
-        </div><!-- /tm-scroll-wrapper -->
-        } <!-- /transitionTableOpen -->
+        </div>&lt;!&ndash; /tm-scroll-wrapper &ndash;&gt;
+        } &lt;!&ndash; /transitionTableOpen &ndash;&gt;
       </div>
 
     </div>
   }
 
-  <!-- ═══════════════════════════════════════════════════════
+  &lt;!&ndash; ═══════════════════════════════════════════════════════
        TAB 3: ESTRUCTURA DE ARCHIVO
-  ══════════════════════════════════════════════════════════ -->
+  ══════════════════════════════════════════════════════════ &ndash;&gt;
   @if (activeTab() === 'file-structure') {
     <div class="tab-content page-enter">
       <div class="card section-card">
@@ -553,9 +553,9 @@
     </div>
   }
 
-  <!-- ═══════════════════════════════════════════════════════
+  &lt;!&ndash; ═══════════════════════════════════════════════════════
        TAB 4: REGLAS DE ASIGNACIÓN
-  ══════════════════════════════════════════════════════════ -->
+  ══════════════════════════════════════════════════════════ &ndash;&gt;
   @if (activeTab() === 'assignment-rules') {
     <div class="tab-content page-enter">
       <div class="card section-card">
@@ -570,7 +570,7 @@
           </div>
         </div>
 
-        <!-- Overflow info banner -->
+        &lt;!&ndash; Overflow info banner &ndash;&gt;
         <div class="overflow-info-banner">
           <div class="oib-icon">🤖</div>
           <div>
@@ -640,7 +640,7 @@
         </div>
       </div>
     </div>
-  }
+  }-->
 
   <!-- ═══════════════════════════════════════════════════════
        TAB 5: GESTIÓN DE USUARIOS
@@ -927,10 +927,10 @@
   <!-- ═══════════════════════════════════════════════════════
        TAB 6: SEGURIDAD
   ══════════════════════════════════════════════════════════ -->
-  @if (activeTab() === 'security') {
+  <!--@if (activeTab() === 'security') {
     <div class="tab-content page-enter">
 
-      <!-- Compliance Banner -->
+      &lt;!&ndash; Compliance Banner &ndash;&gt;
       <div class="compliance-banner">
         <div class="cb-icon">⚖️</div>
         <div>
@@ -944,7 +944,7 @@
         <span class="badge badge-success cb-badge">✓ CONFORME</span>
       </div>
 
-      <!-- Security Policies Card -->
+      &lt;!&ndash; Security Policies Card &ndash;&gt;
       <div class="card section-card">
         <div class="section-header">
           <div>
@@ -985,7 +985,7 @@
         </div>
       </div>
 
-      <!-- Audit Log -->
+      &lt;!&ndash; Audit Log &ndash;&gt;
       <div class="card section-card">
         <div class="section-header">
           <div>
@@ -1025,6 +1025,6 @@
       </div>
 
     </div>
-  }
+  }-->
 
 </div>

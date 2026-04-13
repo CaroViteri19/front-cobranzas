@@ -25,13 +25,13 @@ export class MainLayoutComponent {
 
   readonly navItems: NavItem[] = [
     { id: 'dashboard',     label: 'Dashboard General', icon: '⊞',  route: '/dashboard' },
-    { id: 'integracion',   label: 'M1. Integración',   icon: '🔗', route: '/integracion' },
+    /*{ id: 'integracion',   label: 'M1. Integración',   icon: '🔗', route: '/integracion' },
     { id: 'analitica',     label: 'M2. Analítica',     icon: '📊', route: '/analitica' },
     { id: 'politicas',     label: 'M3. Políticas',     icon: '⚙️', route: '/politicas' },
     { id: 'orquestacion',  label: 'M4. Orquestación',  icon: '💬', route: '/orquestacion' },
     { id: 'gestion-casos', label: 'M5. Gestión Casos', icon: '💼', route: '/gestion-casos' },
     { id: 'recaudo',       label: 'M6. Recaudo',       icon: '💰', route: '/recaudo' },
-    { id: 'reporting',     label: 'M7. Reporting',     icon: '📈', route: '/reporting' },
+    { id: 'reporting',     label: 'M7. Reporting',     icon: '📈', route: '/reporting' },*/
     { id: 'configuracion', label: 'Configuración',     icon: '🔧', route: '/configuracion' },
   ];
 
