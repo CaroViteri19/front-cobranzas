@@ -143,9 +143,82 @@ tr.selected td { background: rgba(16,152,155,0.05); }
 .note-date   { font-size: 0.65rem; color: #94a3b8; }
 .note-text   { font-size: 0.8rem; color: #475569; line-height: 1.4; }
 
-/* Responsive */
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+
+/* ── Desktop wide: tabla + panel lado a lado ── */
 @media (min-width: 1280px) {
   .cases-layout { grid-template-columns: 1fr 360px; }
+}
+
+/* ── Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+  .module-header { flex-direction: column; gap: 10px; }
+  .header-actions { width: 100%; }
+  .filter-select  { max-width: 100%; flex: 1; }
+
+  /* Score cell más compacto */
+  .score-cell .progress-bar { width: 36px; }
+  .smc-value { font-size: 1.35rem; }
+}
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  /* Tabla: ocultar columnas menos críticas */
+  .data-table th:nth-child(2),   /* Score IA */
+  .data-table td:nth-child(2),
+  .data-table th:nth-child(6),   /* Prioridad */
+  .data-table td:nth-child(6) {
+    display: none;
+  }
+
+  /* Reducir padding de celdas */
+  .data-table th,
+  .data-table td {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
+  .assoc-name { font-size: 0.8rem; }
+  .assoc-doc  { font-size: 0.65rem; }
+  .balance    { font-size: 0.78rem; }
+
+  /* Detail stats: apila en 2 columnas */
+  .detail-stats {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .ds { min-width: calc(50% - 0.5rem); }
+
+  /* Header card row: apila */
+  .card-header-row { flex-wrap: wrap; gap: 6px; }
+
+  .smc-value { font-size: 1.25rem; }
+  .stat-mini-card { padding: 1rem; }
+}
+
+/* ── Small mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  /* Solo columnas esenciales en tabla */
+  .data-table th:nth-child(3),   /* Valor */
+  .data-table td:nth-child(3),
+  .data-table th:nth-child(4),   /* Mora */
+  .data-table td:nth-child(4) {
+    display: none;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 6px 8px;
+    font-size: 0.7rem;
+  }
+
+  /* Role switcher: apila label encima */
+  .role-switcher { flex-wrap: wrap; }
+
+  .detail-header { flex-wrap: wrap; }
+  .detail-name { font-size: 0.9rem; }
 }
 
 /* ─── Role switcher ───────────────────────── */

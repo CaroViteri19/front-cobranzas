@@ -81,3 +81,62 @@
 
 /* Score Cell */
 .score-cell { display: flex; align-items: center; gap: 8px; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+
+/* ── Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+  .tab-bar {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;        /* Firefox */
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+
+  .tab-btn { padding: 9px 14px; font-size: 0.8rem; }
+
+  .module-header { flex-direction: column; gap: 10px; }
+  .module-header > button { width: 100%; }
+}
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  /* Tab bar: scroll horizontal, no wrap */
+  .tab-bar {
+    border-radius: var(--radius-lg);
+    justify-content: flex-start;
+    width: 100%;
+  }
+  .tab-btn { padding: 8px 12px; font-size: 0.75rem; white-space: nowrap; }
+
+  /* KPI: valor más pequeño */
+  .kpi-value { font-size: 1.25rem; }
+
+  /* Score grande en cumplimiento: escalar */
+  .score-big { font-size: 2rem; }
+  .compliance-score { padding: 1rem 0; }
+
+  /* Tablas en reporting: scroll horizontal */
+  .card .data-table {
+    min-width: 480px;
+  }
+  .card { overflow-x: auto; }
+
+  /* Reportes en lista: apilar botón */
+  .report-row { flex-wrap: wrap; gap: 8px; }
+  .report-row .btn-secondary { width: 100%; text-align: center; }
+}
+
+/* ── Small mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .kpi-value   { font-size: 1.1rem; }
+  .score-big   { font-size: 1.75rem; }
+  .tab-btn     { padding: 7px 10px; font-size: 0.7rem; }
+
+  /* Compliance grid: apilar */
+  .comp-left  { flex-wrap: wrap; }
+  .comp-label { font-size: 0.75rem; }
+}

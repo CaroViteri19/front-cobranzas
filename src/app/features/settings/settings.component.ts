@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { StoreService } from '../../core/services/store.service';
 import { AssignmentRule, CaseStatus } from '../../core/models';
 import { UserService, RoleOption } from '../../core/services/user.service';
+import { AuthService } from '../../core/services/auth.service';
 
 export type SettingsTab =
   'policies' | 'case-statuses' | 'file-structure' | 'users' | 'assignment-rules' | 'security';
@@ -63,6 +64,7 @@ type PermLevel = 'full' | 'read' | 'none';
 export class SettingsComponent implements OnInit {
   store       = inject(StoreService);
   userService = inject(UserService);
+  private auth   = inject(AuthService);
 
   activeTab = signal<SettingsTab>('policies');
   saving    = signal(false);
@@ -293,6 +295,7 @@ export class SettingsComponent implements OnInit {
   savingUser     = signal(false);
   userError      = signal('');
   availableRoles = signal<RoleOption[]>([]);
+  showNewUserPwd = signal(false);  // ojito contraseña
 
   newUser = {
     fullName:  '',
@@ -302,21 +305,24 @@ export class SettingsComponent implements OnInit {
     roleId:    '',    // ID del rol seleccionado
   };
 
+ /** Roles estáticos usados cuando el usuario no tiene permisos para consultarlos. */
+  private readonly fallbackRoles: RoleOption[] = [
+    { id: 1, name: 'ADMINISTRADOR', description: 'Acceso total al sistema' },
+    { id: 2, name: 'SUPERVISOR',    description: 'Gestión de equipos y reportes' },
+    { id: 3, name: 'AGENTE',        description: 'Gestión de casos asignados' },
+    { id: 4, name: 'AUDITOR',       description: 'Acceso de solo lectura' },
+  ];
+
  ngOnInit(): void {
-  this.userService.getRoles()
-    .then(roles => {
-      console.log('Roles desde backend:', roles);
-      this.availableRoles.set(roles);
-    })
-    .catch(() => {
-      // fallback con IDs únicos (NO más 0)
-      this.availableRoles.set([
-        { id: 1, name: 'ADMINISTRADOR', description: '' },
-        { id: 2, name: 'SUPERVISOR',    description: '' },
-        { id: 3, name: 'AGENTE',        description: '' },
-        { id: 4, name: 'AUDITOR',       description: '' },
-      ]);
-    });
+  // Solo ADMINISTRADOR puede consultar el catálogo de roles en el backend.
+  // Los demás roles usan la lista estática para evitar un 500 innecesario.
+  if (this.auth.hasAnyRole('ADMINISTRADOR')) {
+    this.userService.getRoles()
+      .then(roles => this.availableRoles.set(roles))
+      .catch(() => this.availableRoles.set(this.fallbackRoles));
+  } else {
+    this.availableRoles.set(this.fallbackRoles);
+  }
 }
 
  async addUser(): Promise<void> {

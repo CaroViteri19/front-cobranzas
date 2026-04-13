@@ -19,8 +19,9 @@ export class MainLayoutComponent {
   private auth   = inject(AuthService);
   private router = inject(Router);
 
-  readonly session   = this.auth.session;
-  readonly collapsed = signal(false);
+  readonly session    = this.auth.session;
+  readonly collapsed  = signal(false);
+  readonly mobileOpen = signal(false);   // sidebar overlay en móvil
 
   readonly navItems: NavItem[] = [
     { id: 'dashboard',     label: 'Dashboard General', icon: '⊞',  route: '/dashboard' },
@@ -41,6 +42,14 @@ export class MainLayoutComponent {
 
   toggleSidebar(): void {
     this.collapsed.update(v => !v);
+  }
+
+  toggleMobile(): void {
+    this.mobileOpen.update(v => !v);
+  }
+
+  closeMobile(): void {
+    this.mobileOpen.set(false);
   }
 
   logout(): void {

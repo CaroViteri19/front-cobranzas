@@ -13,10 +13,11 @@ export class LoginComponent {
   private auth   = inject(AuthService);
   private router = inject(Router);
 
-  email    = signal('admin@coovitel.co');
-  password = signal('Admin@coovitel1!');
-  error    = signal('');
-  loading  = signal(false);
+  email       = signal('admin@coovitel.co');
+  password    = signal('Admin@coovitel1!');
+  showPwd     = signal(false);
+  error       = signal('');
+  loading     = signal(false);
 
   async onSubmit(e: Event): Promise<void> {
     e.preventDefault();

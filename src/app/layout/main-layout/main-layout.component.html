@@ -1,7 +1,14 @@
 <div class="shell">
 
+  <!-- ═══════════════ OVERLAY MÓVIL ═══════════════ -->
+  @if (mobileOpen()) {
+    <div class="sidebar-overlay" (click)="closeMobile()"></div>
+  }
+
   <!-- ═══════════════ SIDEBAR ═══════════════ -->
-  <aside class="sidebar" [class.collapsed]="collapsed()">
+  <aside class="sidebar"
+         [class.collapsed]="collapsed()"
+         [class.mobile-open]="mobileOpen()">
     <!-- Logo -->
     <div class="sidebar-logo">
       <div class="logo-icon">BV</div>
@@ -17,6 +24,7 @@
           class="nav-item"
           [routerLink]="item.route"
           routerLinkActive="active"
+          (click)="closeMobile()"
           [title]="collapsed() ? item.label : ''"
         >
           <span class="nav-icon">{{ item.icon }}</span>
@@ -27,8 +35,8 @@
       }
     </nav>
 
-    <!-- Collapse Toggle -->
-    <button class="sidebar-toggle" (click)="toggleSidebar()">
+    <!-- Collapse Toggle (solo desktop) -->
+    <button class="sidebar-toggle desktop-only" (click)="toggleSidebar()">
       {{ collapsed() ? '›' : '‹' }}
     </button>
   </aside>
@@ -39,6 +47,13 @@
     <!-- Header -->
     <header class="topbar">
       <div class="topbar-left">
+        <!-- Hamburger (solo móvil) -->
+        <button class="icon-btn mobile-menu-btn" (click)="toggleMobile()" title="Menú">
+          <span class="hamburger-icon">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
+
         <div class="search-box">
           <span class="search-icon">🔍</span>
           <input type="text" placeholder="Buscar asociado..." class="search-input" />
@@ -58,7 +73,7 @@
             <span class="user-name">{{ session()?.username }}</span>
             <span class="user-role">{{ session()?.roles?.[0] }}</span>
           </div>
-          <div class="avatar">{{ userInitials() }}</div>  
+          <div class="avatar">{{ userInitials() }}</div>
         </div>
 
         <!-- Logout -->
