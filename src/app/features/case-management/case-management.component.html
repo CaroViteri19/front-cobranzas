@@ -64,84 +64,93 @@
 
     <!-- Cases Table -->
     <div class="card cases-table-card">
-      <div class="card-header-row">
+      <!-- Cabecera colapsable -->
+      <div class="collapse-trigger" (click)="casesTableOpen.update(v => !v)">
         <h4 class="card-title">Cola de Gestión Prioritaria</h4>
-        <span class="total-count">{{ filteredCases().length }} casos</span>
+        <div class="collapse-right">
+          <span class="total-count">{{ filteredCases().length }} casos</span>
+          <button class="collapse-btn" type="button" [attr.aria-expanded]="casesTableOpen()">
+            {{ casesTableOpen() ? '▲' : '▼' }}
+          </button>
+        </div>
       </div>
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Asociado</th>
-              <th>Score IA</th>
-              <th>Valor</th>
-              <th>Mora</th>
-              <th>Estado</th>
-              <th>Prioridad</th>
-              <th>Asignación</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (c of filteredCases(); track c.id) {
-              @let assoc = store.getAssociate(c.associateId);
-              @let status = store.getStatusInfo(c.status);
-              @if (assoc) {
-                <tr
-                  [class.selected]="selectedCaseId() === c.id"
-                  (click)="selectCase(c.id)"
-                  style="cursor: pointer"
-                >
-                  <td>
-                    <p class="assoc-name">{{ assoc.name }}</p>
-                    <p class="assoc-doc">{{ assoc.document }}</p>
-                  </td>
-                  <td>
-                    <div class="score-cell">
-                      <div class="progress-bar" style="width: 48px">
-                        <div class="progress-bar-fill" [style.width.%]="(assoc.score/1000)*100"></div>
+
+      @if (casesTableOpen()) {
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Asociado</th>
+                <th>Score IA</th>
+                <th>Valor</th>
+                <th>Mora</th>
+                <th>Estado</th>
+                <th>Prioridad</th>
+                <th>Asignación</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of filteredCases(); track c.id) {
+                @let assoc = store.getAssociate(c.associateId);
+                @let status = store.getStatusInfo(c.status);
+                @if (assoc) {
+                  <tr
+                    [class.selected]="selectedCaseId() === c.id"
+                    (click)="selectCase(c.id)"
+                    style="cursor: pointer"
+                  >
+                    <td data-label="Asociado">
+                      <p class="assoc-name">{{ assoc.name }}</p>
+                      <p class="assoc-doc">{{ assoc.document }}</p>
+                    </td>
+                    <td data-label="Score IA">
+                      <div class="score-cell">
+                        <div class="progress-bar" style="width: 48px">
+                          <div class="progress-bar-fill" [style.width.%]="(assoc.score/1000)*100"></div>
+                        </div>
+                        <span>{{ assoc.score }}</span>
                       </div>
-                      <span>{{ assoc.score }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="balance">${{ assoc.balance.toLocaleString('es-CO') }}</span>
-                  </td>
-                  <td>
-                    <span [class]="assoc.daysOverdue > 60 ? 'days-critical' : assoc.daysOverdue > 30 ? 'days-warn' : 'days-ok'">
-                      {{ assoc.daysOverdue }} días
-                    </span>
-                  </td>
-                  <td>
-                    <span class="status-chip"
-                      [style.background]="status.color + '22'"
-                      [style.color]="status.color">
-                      {{ status.name }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge" [class]="priorityBadge[c.priority]">{{ c.priority }}</span>
-                  </td>
-                  <td>
-                    @if (c.desbordeIA) {
-                      <div class="assign-cell">
-                        <span class="desborde-badge">🤖 Desborde IA</span>
-                        <span class="assign-agent">{{ c.assignedTo }}</span>
-                      </div>
-                    } @else if (c.assignedTo) {
-                      <div class="assign-cell">
-                        <span class="source-badge manual">👤 Manual</span>
-                        <span class="assign-agent">{{ c.assignedTo }}</span>
-                      </div>
-                    } @else {
-                      <span class="unassigned">Sin asignar</span>
-                    }
-                  </td>
-                </tr>
+                    </td>
+                    <td data-label="Valor">
+                      <span class="balance">${{ assoc.balance.toLocaleString('es-CO') }}</span>
+                    </td>
+                    <td data-label="Mora">
+                      <span [class]="assoc.daysOverdue > 60 ? 'days-critical' : assoc.daysOverdue > 30 ? 'days-warn' : 'days-ok'">
+                        {{ assoc.daysOverdue }} días
+                      </span>
+                    </td>
+                    <td data-label="Estado">
+                      <span class="status-chip"
+                        [style.background]="status.color + '22'"
+                        [style.color]="status.color">
+                        {{ status.name }}
+                      </span>
+                    </td>
+                    <td data-label="Prioridad">
+                      <span class="badge" [class]="priorityBadge[c.priority]">{{ c.priority }}</span>
+                    </td>
+                    <td data-label="Asignación">
+                      @if (c.desbordeIA) {
+                        <div class="assign-cell">
+                          <span class="desborde-badge">🤖 Desborde IA</span>
+                          <span class="assign-agent">{{ c.assignedTo }}</span>
+                        </div>
+                      } @else if (c.assignedTo) {
+                        <div class="assign-cell">
+                          <span class="source-badge manual">👤 Manual</span>
+                          <span class="assign-agent">{{ c.assignedTo }}</span>
+                        </div>
+                      } @else {
+                        <span class="unassigned">Sin asignar</span>
+                      }
+                    </td>
+                  </tr>
+                }
               }
-            }
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
 
     <!-- Detail Panel -->
@@ -149,6 +158,12 @@
       @let assoc = store.getAssociate(sc.associateId);
       @if (assoc) {
         <div class="card detail-panel">
+          <!-- Header colapsable del panel en mobile -->
+          <div class="collapse-trigger detail-collapse-trigger" (click)="detailOpen.update(v => !v)">
+            <h4 class="card-title">Detalle del Caso</h4>
+            <button class="collapse-btn" type="button">{{ detailOpen() ? '▲' : '▼' }}</button>
+          </div>
+          @if (detailOpen()) {
           <div class="detail-header">
             <div class="detail-avatar">{{ assoc.name[0] }}</div>
             <div>
@@ -264,6 +279,7 @@
             }
           </div>
 
+          } <!-- end @if(detailOpen) -->
         </div>
       }
     }

@@ -70,6 +70,14 @@ export class SettingsComponent implements OnInit {
   saving    = signal(false);
   savedOk   = signal(false);
 
+  // ── COLAPSABLES ────────────────────────────────────────────────────────────
+  /** Matriz de transición de estados */
+  transitionTableOpen = signal(true);
+  /** Tabla de usuarios */
+  usersTableOpen      = signal(true);
+  /** Matriz de permisos */
+  permMatrixOpen      = signal(true);
+
   // ── POLÍTICAS & SCORE ──────────────────────────────────────────────────────
   riskLevels = signal<RiskLevel[]>([
     { level: 'Bajo',    score: '700 – 1000', mora: '0 – 5 días',    color: '#10b981', action: 'Recordatorio suave' },

@@ -18,6 +18,11 @@ export class CaseManagementComponent {
   showReassign    = signal(false);
   reassignTarget  = '';
 
+  /** Controla si la tabla de casos está expandida o colapsada */
+  casesTableOpen  = signal(true);
+  /** Controla si el panel de detalle está expandido en mobile */
+  detailOpen      = signal(true);
+
   /**
    * Current user role determines UI capabilities:
    *   Administrador / Supervisor → can reassign cases

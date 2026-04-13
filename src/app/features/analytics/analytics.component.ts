@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService } from '../../core/services/store.service';
 
@@ -10,6 +10,9 @@ import { StoreService } from '../../core/services/store.service';
 })
 export class AnalyticsComponent {
   store = inject(StoreService);
+
+  /** Controla si la tabla de perfilamiento está expandida o colapsada */
+  profilingOpen = signal(true);
 
   readonly recoveryTrend = [
     { month: 'Ene', recovery: 65, goal: 70 },

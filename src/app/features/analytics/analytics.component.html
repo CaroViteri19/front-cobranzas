@@ -99,54 +99,66 @@
 
   <!-- Profiling Table -->
   <div class="card">
-    <h4 class="card-title mb-6">🎯 Perfilamiento de Asociados (Top Propensión)</h4>
-    <div class="table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Asociado</th>
-            <th>Score IA</th>
-            <th>Propensión</th>
-            <th>Segmento</th>
-            <th>Mejor Acción</th>
-            <th>Riesgo</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (a of store.associates(); track a.id) {
-            <tr>
-              <td>
-                <div class="assoc-info">
-                  <div class="assoc-avatar">{{ a.name[0] }}</div>
-                  <div>
-                    <p class="assoc-name">{{ a.name }}</p>
-                    <p class="assoc-doc">{{ a.document }}</p>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <div class="score-cell">
-                  <div class="progress-bar" style="width: 64px">
-                    <div class="progress-bar-fill" [style.width.%]="(a.score / 1000) * 100"></div>
-                  </div>
-                  <span class="score-val">{{ a.score }}</span>
-                </div>
-              </td>
-              <td>
-                <span class="badge" [class]="a.propensity === 'Alta' ? 'badge-success' : a.propensity === 'Media' ? 'badge-info' : 'badge-danger'">
-                  {{ a.propensity }}
-                </span>
-              </td>
-              <td><span class="segment-text">{{ a.segment }}</span></td>
-              <td><span class="action-text">{{ a.lastAction || 'Pendiente' }}</span></td>
-              <td>
-                <span class="risk-text" [class]="'risk-' + a.risk.toLowerCase()">{{ a.risk }}</span>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <!-- Cabecera colapsable -->
+    <div class="collapse-trigger" (click)="profilingOpen.update(v => !v)">
+      <h4 class="card-title">🎯 Perfilamiento de Asociados (Top Propensión)</h4>
+      <div class="collapse-right">
+        <span class="collapse-count">{{ store.associates().length }} asociados</span>
+        <button class="collapse-btn" type="button" [attr.aria-expanded]="profilingOpen()">
+          {{ profilingOpen() ? '▲' : '▼' }}
+        </button>
+      </div>
     </div>
+
+    @if (profilingOpen()) {
+      <div class="table-wrapper">
+        <table class="data-table profiling-table">
+          <thead>
+            <tr>
+              <th>Asociado</th>
+              <th>Score IA</th>
+              <th>Propensión</th>
+              <th>Segmento</th>
+              <th>Mejor Acción</th>
+              <th>Riesgo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of store.associates(); track a.id) {
+              <tr>
+                <td data-label="Asociado">
+                  <div class="assoc-info">
+                    <div class="assoc-avatar">{{ a.name[0] }}</div>
+                    <div>
+                      <p class="assoc-name">{{ a.name }}</p>
+                      <p class="assoc-doc">{{ a.document }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td data-label="Score IA">
+                  <div class="score-cell">
+                    <div class="progress-bar" style="width: 64px">
+                      <div class="progress-bar-fill" [style.width.%]="(a.score / 1000) * 100"></div>
+                    </div>
+                    <span class="score-val">{{ a.score }}</span>
+                  </div>
+                </td>
+                <td data-label="Propensión">
+                  <span class="badge" [class]="a.propensity === 'Alta' ? 'badge-success' : a.propensity === 'Media' ? 'badge-info' : 'badge-danger'">
+                    {{ a.propensity }}
+                  </span>
+                </td>
+                <td data-label="Segmento"><span class="segment-text">{{ a.segment }}</span></td>
+                <td data-label="Mejor Acción"><span class="action-text">{{ a.lastAction || 'Pendiente' }}</span></td>
+                <td data-label="Riesgo">
+                  <span class="risk-text" [class]="'risk-' + a.risk.toLowerCase()">{{ a.risk }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   </div>
 
 </div>
