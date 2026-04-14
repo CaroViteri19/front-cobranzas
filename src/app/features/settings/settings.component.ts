@@ -44,6 +44,18 @@ interface AppUser {
   lastLogin: string;
 }
 
+interface BackendUserSummary {
+  id?: string | number;
+  fullname?: string;
+  name?: string;
+  username?: string;
+  email?: string;
+  role?: string;
+  roles?: string[];
+  status?: string;
+  lastSeen?: string;
+}
+
 interface SecurityPolicy {
   label: string;
   value: string;
@@ -59,31 +71,55 @@ type PermLevel = 'full' | 'read' | 'none';
   selector: 'app-settings',
   imports: [CommonModule, FormsModule],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css'
+  styleUrl: './settings.component.css',
 })
 export class SettingsComponent implements OnInit {
-  store       = inject(StoreService);
+  store = inject(StoreService);
   userService = inject(UserService);
-  private auth   = inject(AuthService);
+  private auth = inject(AuthService);
 
   activeTab = signal<SettingsTab>('policies');
-  saving    = signal(false);
-  savedOk   = signal(false);
+  saving = signal(false);
+  savedOk = signal(false);
 
   // ── COLAPSABLES ────────────────────────────────────────────────────────────
   /** Matriz de transición de estados */
   transitionTableOpen = signal(true);
   /** Tabla de usuarios */
-  usersTableOpen      = signal(true);
+  usersTableOpen = signal(true);
   /** Matriz de permisos */
-  permMatrixOpen      = signal(true);
+  permMatrixOpen = signal(true);
 
   // ── POLÍTICAS & SCORE ──────────────────────────────────────────────────────
   riskLevels = signal<RiskLevel[]>([
-    { level: 'Bajo',    score: '700 – 1000', mora: '0 – 5 días',    color: '#10b981', action: 'Recordatorio suave' },
-    { level: 'Medio',   score: '400 – 699',  mora: '6 – 30 días',   color: '#3b82f6', action: 'Llamada informativa' },
-    { level: 'Alto',    score: '200 – 399',  mora: '31 – 90 días',  color: '#f59e0b', action: 'Negociación directa' },
-    { level: 'Crítico', score: '0 – 199',    mora: '> 90 días',     color: '#ef4444', action: 'Cobro prejurídico' },
+    {
+      level: 'Bajo',
+      score: '700 – 1000',
+      mora: '0 – 5 días',
+      color: '#10b981',
+      action: 'Recordatorio suave',
+    },
+    {
+      level: 'Medio',
+      score: '400 – 699',
+      mora: '6 – 30 días',
+      color: '#3b82f6',
+      action: 'Llamada informativa',
+    },
+    {
+      level: 'Alto',
+      score: '200 – 399',
+      mora: '31 – 90 días',
+      color: '#f59e0b',
+      action: 'Negociación directa',
+    },
+    {
+      level: 'Crítico',
+      score: '0 – 199',
+      mora: '> 90 días',
+      color: '#ef4444',
+      action: 'Cobro prejurídico',
+    },
   ]);
 
   showNewRisk = signal(false);
@@ -91,20 +127,20 @@ export class SettingsComponent implements OnInit {
 
   addRiskLevel(): void {
     if (!this.newRisk.level || !this.newRisk.score) return;
-    this.riskLevels.update(list => [...list, { ...this.newRisk }]);
+    this.riskLevels.update((list) => [...list, { ...this.newRisk }]);
     this.newRisk = { level: '', score: '', mora: '', color: '#64748b', action: '' };
     this.showNewRisk.set(false);
   }
 
   removeRiskLevel(idx: number): void {
-    this.riskLevels.update(list => list.filter((_, i) => i !== idx));
+    this.riskLevels.update((list) => list.filter((_, i) => i !== idx));
   }
 
   policies = signal<PolicyItem[]>([
-    { name: 'Preventiva',     segment: 'Mora < 0 días',     intensity: 'Baja' },
-    { name: 'Administrativa', segment: 'Mora 1 – 30 días',  intensity: 'Media' },
-    { name: 'Temprana',       segment: 'Mora 31 – 60 días', intensity: 'Alta' },
-    { name: 'Prejurídica',    segment: 'Mora > 90 días',    intensity: 'Crítica' },
+    { name: 'Preventiva', segment: 'Mora < 0 días', intensity: 'Baja' },
+    { name: 'Administrativa', segment: 'Mora 1 – 30 días', intensity: 'Media' },
+    { name: 'Temprana', segment: 'Mora 31 – 60 días', intensity: 'Alta' },
+    { name: 'Prejurídica', segment: 'Mora > 90 días', intensity: 'Crítica' },
   ]);
 
   showNewPolicy = signal(false);
@@ -112,36 +148,36 @@ export class SettingsComponent implements OnInit {
 
   addPolicy(): void {
     if (!this.newPolicy.name || !this.newPolicy.segment) return;
-    this.policies.update(list => [...list, { ...this.newPolicy }]);
+    this.policies.update((list) => [...list, { ...this.newPolicy }]);
     this.newPolicy = { name: '', segment: '', intensity: 'Baja' };
     this.showNewPolicy.set(false);
   }
 
   removePolicy(idx: number): void {
-    this.policies.update(list => list.filter((_, i) => i !== idx));
+    this.policies.update((list) => list.filter((_, i) => i !== idx));
   }
 
   // AI Scoring
   aiVariables = signal<AiVariable[]>([
-    { label: 'Historial de Pago',            weight: 40 },
-    { label: 'Días de Mora Actual',          weight: 30 },
+    { label: 'Historial de Pago', weight: 40 },
+    { label: 'Días de Mora Actual', weight: 30 },
     { label: 'Frecuencia de Incumplimiento', weight: 20 },
-    { label: 'Antigüedad del Asociado',      weight: 10 },
+    { label: 'Antigüedad del Asociado', weight: 10 },
   ]);
 
   aiModel = signal('Predictivo Estándar');
   totalWeight = computed(() => this.aiVariables().reduce((s, v) => s + v.weight, 0));
 
   updateWeight(idx: number, weight: number): void {
-    this.aiVariables.update(list => list.map((v, i) => i === idx ? { ...v, weight } : v));
+    this.aiVariables.update((list) => list.map((v, i) => (i === idx ? { ...v, weight } : v)));
   }
 
   resetAiDefaults(): void {
     this.aiVariables.set([
-      { label: 'Historial de Pago',            weight: 40 },
-      { label: 'Días de Mora Actual',          weight: 30 },
+      { label: 'Historial de Pago', weight: 40 },
+      { label: 'Días de Mora Actual', weight: 30 },
       { label: 'Frecuencia de Incumplimiento', weight: 20 },
-      { label: 'Antigüedad del Asociado',      weight: 10 },
+      { label: 'Antigüedad del Asociado', weight: 10 },
     ]);
     this.aiModel.set('Predictivo Estándar');
   }
@@ -151,21 +187,21 @@ export class SettingsComponent implements OnInit {
 
   addAiVariable(): void {
     if (!this.newAiVar.label) return;
-    this.aiVariables.update(list => [...list, { ...this.newAiVar }]);
+    this.aiVariables.update((list) => [...list, { ...this.newAiVar }]);
     this.newAiVar = { label: '', weight: 0 };
     this.showNewAiVar.set(false);
   }
 
   removeAiVariable(idx: number): void {
-    this.aiVariables.update(list => list.filter((_, i) => i !== idx));
+    this.aiVariables.update((list) => list.filter((_, i) => i !== idx));
   }
 
   // Contact Rules
   contactRules = signal<ContactRule[]>([
-    { rule: 'Ventana de Contacto L-V',      value: '07:00 – 19:00',       type: 'Horario' },
-    { rule: 'Ventana de Contacto Sábados',  value: '08:00 – 15:00',       type: 'Horario' },
-    { rule: 'Frecuencia Máxima Semanal',    value: '2 contactos / canal', type: 'Frecuencia' },
-    { rule: 'Exclusión Domingos/Festivos',  value: 'Habilitado',          type: 'Exclusión' },
+    { rule: 'Ventana de Contacto L-V', value: '07:00 – 19:00', type: 'Horario' },
+    { rule: 'Ventana de Contacto Sábados', value: '08:00 – 15:00', type: 'Horario' },
+    { rule: 'Frecuencia Máxima Semanal', value: '2 contactos / canal', type: 'Frecuencia' },
+    { rule: 'Exclusión Domingos/Festivos', value: 'Habilitado', type: 'Exclusión' },
   ]);
 
   showNewContactRule = signal(false);
@@ -173,13 +209,13 @@ export class SettingsComponent implements OnInit {
 
   addContactRule(): void {
     if (!this.newContactRule.rule || !this.newContactRule.value) return;
-    this.contactRules.update(list => [...list, { ...this.newContactRule }]);
+    this.contactRules.update((list) => [...list, { ...this.newContactRule }]);
     this.newContactRule = { rule: '', value: '', type: 'General' };
     this.showNewContactRule.set(false);
   }
 
   removeContactRule(idx: number): void {
-    this.contactRules.update(list => list.filter((_, i) => i !== idx));
+    this.contactRules.update((list) => list.filter((_, i) => i !== idx));
   }
 
   // ── CASE STATUSES (Transition Matrix) ─────────────────────────────────────
@@ -196,7 +232,7 @@ export class SettingsComponent implements OnInit {
   statusNames(ids: string[] | undefined): string {
     if (!ids || ids.length === 0) return '—';
     return ids
-      .map(id => this.store.caseStatuses().find(s => s.id === id)?.name ?? id)
+      .map((id) => this.store.caseStatuses().find((s) => s.id === id)?.name ?? id)
       .join(', ');
   }
 
@@ -220,7 +256,7 @@ export class SettingsComponent implements OnInit {
     if (this.statusHasCases(id)) {
       const count = this.store.caseCountPerStatus()[id];
       this.deleteStatusError.set(
-        `No se puede eliminar: el estado tiene ${count} caso(s) activo(s) o histórico(s) registrado(s).`
+        `No se puede eliminar: el estado tiene ${count} caso(s) activo(s) o histórico(s) registrado(s).`,
       );
       setTimeout(() => this.deleteStatusError.set(null), 5000);
       return;
@@ -230,31 +266,56 @@ export class SettingsComponent implements OnInit {
 
   // ── FILE STRUCTURE ─────────────────────────────────────────────────────────
   readonly fileFields = [
-    { col: 'TIPO_ID',         type: 'VARCHAR(2)',    req: true,  desc: 'Tipo de documento (CC, NIT, CE, PA)' },
-    { col: 'NUM_DOCUMENTO',   type: 'VARCHAR(20)',   req: true,  desc: 'Número de identificación del asociado' },
-    { col: 'NOMBRE_COMPLETO', type: 'VARCHAR(120)',  req: true,  desc: 'Nombre y apellidos completos' },
-    { col: 'NUM_OBLIGACION',  type: 'VARCHAR(30)',   req: true,  desc: 'Identificador único de la deuda' },
-    { col: 'SALDO_TOTAL',     type: 'DECIMAL(18,2)', req: true,  desc: 'Monto total exigible en COP' },
-    { col: 'DIAS_MORA',       type: 'INTEGER',       req: true,  desc: 'Días de vencimiento de la obligación' },
-    { col: 'FECHA_VENC',      type: 'DATE',          req: true,  desc: 'Fecha de vencimiento (YYYYMMDD)' },
-    { col: 'TELEFONO_1',      type: 'VARCHAR(15)',   req: true,  desc: 'Número celular principal' },
-    { col: 'EMAIL',           type: 'VARCHAR(80)',   req: false, desc: 'Correo electrónico del asociado' },
-    { col: 'TELEFONO_2',      type: 'VARCHAR(15)',   req: false, desc: 'Número alternativo de contacto' },
-    { col: 'CIUDAD',          type: 'VARCHAR(60)',   req: false, desc: 'Ciudad de residencia' },
-    { col: 'CANAL_PREFERIDO', type: 'VARCHAR(20)',   req: false, desc: 'WhatsApp | SMS | Email | Voz' },
-    { col: 'SEGMENTO',        type: 'VARCHAR(30)',   req: false, desc: 'Segmento de cartera asignado' },
-    { col: 'PRODUCTO',        type: 'VARCHAR(50)',   req: false, desc: 'Tipo de obligación financiera' },
-    { col: 'CODIGO_AGENTE',   type: 'VARCHAR(10)',   req: false, desc: 'ID del agente asignado (si aplica)' },
+    { col: 'TIPO_ID', type: 'VARCHAR(2)', req: true, desc: 'Tipo de documento (CC, NIT, CE, PA)' },
+    {
+      col: 'NUM_DOCUMENTO',
+      type: 'VARCHAR(20)',
+      req: true,
+      desc: 'Número de identificación del asociado',
+    },
+    {
+      col: 'NOMBRE_COMPLETO',
+      type: 'VARCHAR(120)',
+      req: true,
+      desc: 'Nombre y apellidos completos',
+    },
+    {
+      col: 'NUM_OBLIGACION',
+      type: 'VARCHAR(30)',
+      req: true,
+      desc: 'Identificador único de la deuda',
+    },
+    { col: 'SALDO_TOTAL', type: 'DECIMAL(18,2)', req: true, desc: 'Monto total exigible en COP' },
+    { col: 'DIAS_MORA', type: 'INTEGER', req: true, desc: 'Días de vencimiento de la obligación' },
+    { col: 'FECHA_VENC', type: 'DATE', req: true, desc: 'Fecha de vencimiento (YYYYMMDD)' },
+    { col: 'TELEFONO_1', type: 'VARCHAR(15)', req: true, desc: 'Número celular principal' },
+    { col: 'EMAIL', type: 'VARCHAR(80)', req: false, desc: 'Correo electrónico del asociado' },
+    { col: 'TELEFONO_2', type: 'VARCHAR(15)', req: false, desc: 'Número alternativo de contacto' },
+    { col: 'CIUDAD', type: 'VARCHAR(60)', req: false, desc: 'Ciudad de residencia' },
+    {
+      col: 'CANAL_PREFERIDO',
+      type: 'VARCHAR(20)',
+      req: false,
+      desc: 'WhatsApp | SMS | Email | Voz',
+    },
+    { col: 'SEGMENTO', type: 'VARCHAR(30)', req: false, desc: 'Segmento de cartera asignado' },
+    { col: 'PRODUCTO', type: 'VARCHAR(50)', req: false, desc: 'Tipo de obligación financiera' },
+    {
+      col: 'CODIGO_AGENTE',
+      type: 'VARCHAR(10)',
+      req: false,
+      desc: 'ID del agente asignado (si aplica)',
+    },
   ];
 
-  readonly requiredCount = this.fileFields.filter(f => f.req).length;
-  readonly optionalCount = this.fileFields.filter(f => !f.req).length;
+  readonly requiredCount = this.fileFields.filter((f) => f.req).length;
+  readonly optionalCount = this.fileFields.filter((f) => !f.req).length;
 
   // ── ASSIGNMENT RULES ──────────────────────────────────────────────────────
   showNewRule = signal(false);
-  newRuleName   = '';
+  newRuleName = '';
   newRuleAmount = '';
-  newRuleRisk   = '';
+  newRuleRisk = '';
 
   addAssignmentRule(): void {
     if (!this.newRuleName.trim()) return;
@@ -265,9 +326,11 @@ export class SettingsComponent implements OnInit {
       isActive: true,
     };
     if (this.newRuleAmount) rule.minAmount = Number(this.newRuleAmount);
-    if (this.newRuleRisk)   rule.riskLevels = [this.newRuleRisk];
+    if (this.newRuleRisk) rule.riskLevels = [this.newRuleRisk];
     this.store.addAssignmentRule(rule);
-    this.newRuleName = ''; this.newRuleAmount = ''; this.newRuleRisk = '';
+    this.newRuleName = '';
+    this.newRuleAmount = '';
+    this.newRuleRisk = '';
     this.showNewRule.set(false);
   }
 
@@ -288,150 +351,202 @@ export class SettingsComponent implements OnInit {
   /** 4 canonical roles per spec */
   readonly roleOptions = ['Administrador', 'Supervisor', 'Agente', 'Auditor'];
 
-  users = signal<AppUser[]>([
-    ]);
+  users = signal<AppUser[]>([]);
 
   // ── Gestión de usuarios ────────────────────────────────────────────────────
-  showNewUser    = signal(false);
-  savingUser     = signal(false);
-  userError      = signal('');
+  showNewUser = signal(false);
+  savingUser = signal(false);
+  userError = signal('');
   availableRoles = signal<RoleOption[]>([]);
-  showNewUserPwd = signal(false);  // ojito contraseña
+  showNewUserPwd = signal(false); // ojito contraseña
 
   newUser = {
-    fullName:  '',
-    username:  '',
-    email:     '',
-    password:  '',
-    roleId:    '',    // ID del rol seleccionado
+    fullName: '',
+    username: '',
+    email: '',
+    password: '',
+    roleId: '', // ID del rol seleccionado
   };
 
- /** Roles estáticos usados cuando el usuario no tiene permisos para consultarlos. */
+  /** Roles estáticos usados cuando el usuario no tiene permisos para consultarlos. */
   private readonly fallbackRoles: RoleOption[] = [
     { id: 1, name: 'ADMINISTRADOR', description: 'Acceso total al sistema' },
-    { id: 2, name: 'SUPERVISOR',    description: 'Gestión de equipos y reportes' },
-    { id: 3, name: 'AGENTE',        description: 'Gestión de casos asignados' },
-    { id: 4, name: 'AUDITOR',       description: 'Acceso de solo lectura' },
+    { id: 2, name: 'SUPERVISOR', description: 'Gestión de equipos y reportes' },
+    { id: 3, name: 'AGENTE', description: 'Gestión de casos asignados' },
+    { id: 4, name: 'AUDITOR', description: 'Acceso de solo lectura' },
   ];
 
- ngOnInit(): void {
-  // Solo ADMINISTRADOR puede consultar el catálogo de roles en el backend.
-  // Los demás roles usan la lista estática para evitar un 500 innecesario.
-  if (this.auth.hasAnyRole('ADMINISTRADOR')) {
-    this.userService.getRoles()
-      .then(roles => this.availableRoles.set(roles))
-      .catch(() => this.availableRoles.set(this.fallbackRoles));
-  } else {
-    this.availableRoles.set(this.fallbackRoles);
-  }
-}
-
- async addUser(): Promise<void> {
-  this.userError.set('');
-
-  // ✅ Validación completa
-  if (!this.newUser.fullName || !this.newUser.username ||
-      !this.newUser.email    || !this.newUser.password) {
-    this.userError.set('Todos los campos son obligatorios.');
-    return;
+  ngOnInit(): void {
+    void this.loadInitialData();
   }
 
-  if (!this.newUser.roleId) {
-    this.userError.set('Debes seleccionar un rol.');
-    return;
-  }
-
-  // Validación de contraseña: mínimo 12 caracteres y al menos 1 carácter especial
-  const passwordRegex = /^(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{12,}$/;
-  if (!passwordRegex.test(this.newUser.password)) {
-    this.userError.set('La contraseña debe tener mínimo 12 caracteres y al menos un carácter especial.');
-    return;
-  }
-
-  this.savingUser.set(true);
-
-  try {
-    const created = await this.userService.register({
-      fullName: this.newUser.fullName,
-      username: this.newUser.username,
-      email:    this.newUser.email,
-      password: this.newUser.password,
-      role:     Number(this.newUser.roleId),   // campo correcto + conversión a número
-    });
-
-    // Nombre del rol para la UI: prioriza la respuesta del backend
-    const roleName = created.roles[0]
-      ?? this.availableRoles().find(r => r.id === Number(this.newUser.roleId))?.name
-      ?? 'AGENTE';
-
-    // ✅ Actualizar UI
-    this.users.update(list => [
-      ...list,
-      {
-        id:        String(created.id),
-        name:      created.fullName,
-        email:     created.email,
-        role:      roleName,
-        status:    'Activo',
-        lastLogin: 'Nunca'
-      }
-    ]);
-
-    // ✅ Reset limpio
-    this.newUser = {
-      fullName: '',
-      username: '',
-      email: '',
-      password: '',
-      roleId: '',
-    };
-
-    this.showNewUser.set(false);
-
-  } catch (err: any) {
-    console.error('Error backend:', err);
-
-    // ✅ Mejor manejo de errores
-    if (err?.error?.message) {
-      this.userError.set(err.error.message);
+  private async loadInitialData(): Promise<void> {
+    // Solo ADMINISTRADOR consulta roles en backend; el resto usa fallback local.
+    if (this.auth.hasAnyRole('ADMINISTRADOR')) {
+      this.userService
+        .getRoles()
+        .then((roles) => this.availableRoles.set(roles))
+        .catch(() => this.availableRoles.set(this.fallbackRoles));
     } else {
-      this.userError.set('Error al crear el usuario. Verifica los datos.');
+      this.availableRoles.set(this.fallbackRoles);
     }
 
-  } finally {
-    this.savingUser.set(false);
+    try {
+      const backendUsers = (await this.userService.getUsers()) as BackendUserSummary[];
+      this.users.set(backendUsers.map((u, index) => this.mapBackendUser(u, index)));
+    } catch (error) {
+      console.error('Error cargando usuarios:', error);
+      this.users.set([]);
+    }
   }
-}
+
+  private mapBackendUser(user: BackendUserSummary, index: number): AppUser {
+    const role = user.role ?? user.roles?.[0] ?? 'AGENTE';
+    const name = user.fullname ?? user.name ?? user.username ?? user.email ?? `Usuario ${index + 1}`;
+
+    const backendStatus = user.status?.toLowerCase() ?? 'active';
+    const isActive = backendStatus === 'active';
+
+    // Parsear lastSeen (ISO 8601) a formato legible
+    let lastLogin = 'Nunca';
+    if (user.lastSeen) {
+      try {
+        const date = new Date(user.lastSeen);
+        lastLogin = date.toLocaleString('es-CO', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      } catch {
+        lastLogin = user.lastSeen;
+      }
+    }
+
+    return {
+      id: String(user.id ?? index + 1),
+      name,
+      email: user.email ?? '—',
+      role,
+      status: isActive ? 'Activo' : 'Inactivo',
+      lastLogin,
+    };
+  }
+
+  async addUser(): Promise<void> {
+    this.userError.set('');
+
+    // ✅ Validación completa
+    if (
+      !this.newUser.fullName ||
+      !this.newUser.username ||
+      !this.newUser.email ||
+      !this.newUser.password
+    ) {
+      this.userError.set('Todos los campos son obligatorios.');
+      return;
+    }
+
+    if (!this.newUser.roleId) {
+      this.userError.set('Debes seleccionar un rol.');
+      return;
+    }
+
+    // Validación de contraseña: mínimo 12 caracteres y al menos 1 carácter especial
+    const passwordRegex = /^(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{12,}$/;
+    if (!passwordRegex.test(this.newUser.password)) {
+      this.userError.set(
+        'La contraseña debe tener mínimo 12 caracteres y al menos un carácter especial.',
+      );
+      return;
+    }
+
+    this.savingUser.set(true);
+
+    try {
+      const created = await this.userService.register({
+        fullName: this.newUser.fullName,
+        username: this.newUser.username,
+        email: this.newUser.email,
+        password: this.newUser.password,
+        role: Number(this.newUser.roleId), // campo correcto + conversión a número
+      });
+
+      // Nombre del rol para la UI: prioriza la respuesta del backend
+      const roleName =
+        created.roles[0] ??
+        this.availableRoles().find((r) => r.id === Number(this.newUser.roleId))?.name ??
+        'AGENTE';
+
+      // ✅ Actualizar UI
+      this.users.update((list) => [
+        ...list,
+        {
+          id: String(created.id),
+          name: created.fullName,
+          email: created.email,
+          role: roleName,
+          status: 'Activo',
+          lastLogin: 'Nunca',
+        },
+      ]);
+
+      // ✅ Reset limpio
+      this.newUser = {
+        fullName: '',
+        username: '',
+        email: '',
+        password: '',
+        roleId: '',
+      };
+
+      this.showNewUser.set(false);
+    } catch (err: any) {
+      console.error('Error backend:', err);
+
+      // ✅ Mejor manejo de errores
+      if (err?.error?.message) {
+        this.userError.set(err.error.message);
+      } else {
+        this.userError.set('Error al crear el usuario. Verifica los datos.');
+      }
+    } finally {
+      this.savingUser.set(false);
+    }
+  }
 
   toggleUserStatus(id: string): void {
-    this.users.update(list => list.map(u =>
-      u.id === id ? { ...u, status: u.status === 'Activo' ? 'Inactivo' : 'Activo' } : u
-    ));
+    this.users.update((list) =>
+      list.map((u) =>
+        u.id === id ? { ...u, status: u.status === 'Activo' ? 'Inactivo' : 'Activo' } : u,
+      ),
+    );
   }
 
   removeUser(id: string): void {
-    this.users.update(list => list.filter(u => u.id !== id));
+    this.users.update((list) => list.filter((u) => u.id !== id));
   }
 
-  readonly activeUsersCount = computed(() =>
-    this.users().filter(u => u.status === 'Activo').length
+  readonly activeUsersCount = computed(
+    () => this.users().filter((u) => u.status === 'Activo').length,
   );
 
   roleCount(role: string): number {
-    return this.users().filter(u => u.role === role && u.status === 'Activo').length;
+    return this.users().filter((u) => u.role === role && u.status === 'Activo').length;
   }
 
   // ── PERMISSIONS MATRIX (9 modules × 4 roles) ──────────────────────────────
   readonly permModules = [
-    { label: 'Dashboard',       icon: '📊' },
-    { label: 'M1 Integración',  icon: '🔌' },
-    { label: 'M2 Analítica',    icon: '📈' },
-    { label: 'M3 Políticas',    icon: '⚡' },
+    { label: 'Dashboard', icon: '📊' },
+    { label: 'M1 Integración', icon: '🔌' },
+    { label: 'M2 Analítica', icon: '📈' },
+    { label: 'M3 Políticas', icon: '⚡' },
     { label: 'M4 Orquestación', icon: '🎛️' },
-    { label: 'M5 Gestión Casos',icon: '📋' },
-    { label: 'M6 Recaudo',      icon: '💰' },
-    { label: 'M7 Reportes',     icon: '📄' },
-    { label: 'Configuración',   icon: '⚙️' },
+    { label: 'M5 Gestión Casos', icon: '📋' },
+    { label: 'M6 Recaudo', icon: '💰' },
+    { label: 'M7 Reportes', icon: '📄' },
+    { label: 'Configuración', icon: '⚙️' },
   ];
 
   readonly permRoles = ['Administrador', 'Supervisor', 'Agente', 'Auditor'];
@@ -488,20 +603,66 @@ export class SettingsComponent implements OnInit {
 */
   // ── SECURITY POLICIES ──────────────────────────────────────────────────────
   securityPolicies = signal<SecurityPolicy[]>([
-    { label: 'Longitud mínima de contraseña',      value: '12',         description: 'Caracteres mínimos requeridos por política interna',          editable: true,  icon: '🔑' },
-    { label: 'Intentos antes de bloqueo',          value: '3',          description: 'Bloqueo automático de cuenta tras intentos fallidos',          editable: true,  icon: '🔒' },
-    { label: 'Duración del bloqueo (min)',          value: '30',         description: 'Minutos de bloqueo antes de permitir nuevo intento',           editable: true,  icon: '⏱️' },
-    { label: 'Vigencia de contraseña (días)',       value: '90',         description: 'Días hasta expiración obligatoria de la contraseña',           editable: true,  icon: '📅' },
-    { label: 'Cierre de sesión inactiva (min)',     value: '20',         description: 'Cierre automático por inactividad del usuario',                editable: true,  icon: '💤' },
-    { label: 'Log de Auditoría Inmutable',          value: 'Habilitado', description: 'Registro inalterable de todas las acciones — Ley 2300',       editable: false, icon: '📜' },
-    { label: 'Restricciones horarias Ley 2300',    value: 'Habilitado', description: 'Control automático de ventanas de contacto permitidas',        editable: false, icon: '⚖️' },
-    { label: 'Cifrado en reposo (AES-256)',         value: 'Habilitado', description: 'Cifrado obligatorio de datos sensibles almacenados',           editable: false, icon: '🛡️' },
+    {
+      label: 'Longitud mínima de contraseña',
+      value: '12',
+      description: 'Caracteres mínimos requeridos por política interna',
+      editable: true,
+      icon: '🔑',
+    },
+    {
+      label: 'Intentos antes de bloqueo',
+      value: '3',
+      description: 'Bloqueo automático de cuenta tras intentos fallidos',
+      editable: true,
+      icon: '🔒',
+    },
+    {
+      label: 'Duración del bloqueo (min)',
+      value: '30',
+      description: 'Minutos de bloqueo antes de permitir nuevo intento',
+      editable: true,
+      icon: '⏱️',
+    },
+    {
+      label: 'Vigencia de contraseña (días)',
+      value: '90',
+      description: 'Días hasta expiración obligatoria de la contraseña',
+      editable: true,
+      icon: '📅',
+    },
+    {
+      label: 'Cierre de sesión inactiva (min)',
+      value: '20',
+      description: 'Cierre automático por inactividad del usuario',
+      editable: true,
+      icon: '💤',
+    },
+    {
+      label: 'Log de Auditoría Inmutable',
+      value: 'Habilitado',
+      description: 'Registro inalterable de todas las acciones — Ley 2300',
+      editable: false,
+      icon: '📜',
+    },
+    {
+      label: 'Restricciones horarias Ley 2300',
+      value: 'Habilitado',
+      description: 'Control automático de ventanas de contacto permitidas',
+      editable: false,
+      icon: '⚖️',
+    },
+    {
+      label: 'Cifrado en reposo (AES-256)',
+      value: 'Habilitado',
+      description: 'Cifrado obligatorio de datos sensibles almacenados',
+      editable: false,
+      icon: '🛡️',
+    },
   ]);
 
   updateSecurityValue(idx: number, value: string): void {
-    this.securityPolicies.update(list =>
-      list.map((p, i) => i === idx ? { ...p, value } : p)
-    );
+    this.securityPolicies.update((list) => list.map((p, i) => (i === idx ? { ...p, value } : p)));
   }
 
   // ── SAVE ──────────────────────────────────────────────────────────────────
