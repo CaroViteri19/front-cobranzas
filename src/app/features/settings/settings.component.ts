@@ -289,14 +289,7 @@ export class SettingsComponent implements OnInit {
   readonly roleOptions = ['Administrador', 'Supervisor', 'Agente', 'Auditor'];
 
   users = signal<AppUser[]>([
-    { id: 'U-001', name: 'Camilo Cantor',    email: 'admin@fintra.co',      role: 'Administrador', status: 'Activo',   lastLogin: '07 Abr 2026, 09:15' },
-    { id: 'U-002', name: 'Laura Rodríguez',  email: 'laura@fintra.co',      role: 'Supervisor',    status: 'Activo',   lastLogin: '07 Abr 2026, 09:00' },
-    { id: 'U-003', name: 'Agente 01',        email: 'agente01@fintra.co',   role: 'Agente',        status: 'Activo',   lastLogin: '07 Abr 2026, 08:55' },
-    { id: 'U-004', name: 'Agente 02',        email: 'agente02@fintra.co',   role: 'Agente',        status: 'Activo',   lastLogin: '07 Abr 2026, 08:30' },
-    { id: 'U-005', name: 'Agente 03',        email: 'agente03@fintra.co',   role: 'Agente',        status: 'Activo',   lastLogin: '06 Abr 2026, 17:45' },
-    { id: 'U-006', name: 'Agente 04',        email: 'agente04@fintra.co',   role: 'Agente',        status: 'Inactivo', lastLogin: '01 Abr 2026, 10:00' },
-    { id: 'U-007', name: 'Carlos Mejía',     email: 'carlos@fintra.co',     role: 'Auditor',       status: 'Activo',   lastLogin: '05 Abr 2026, 14:20' },
-  ]);
+    ]);
 
   // ── Gestión de usuarios ────────────────────────────────────────────────────
   showNewUser    = signal(false);
@@ -447,24 +440,24 @@ export class SettingsComponent implements OnInit {
    * permMatrix[moduleIndex][roleIndex]: 'full' | 'read' | 'none'
    * Signal so the Admin can edit it live. Col 0 (Admin) is always locked to 'full'.
    */
-  private readonly defaultPermMatrix: PermLevel[][] = [
+  /*private readonly defaultPermMatrix: PermLevel[][] = [
     //          Admin    Supervisor  Agente   Auditor
-    /* Dashboard       */ ['full', 'full', 'full', 'read'],
-    /* M1 Integración  */ ['full', 'read', 'none', 'read'],
-    /* M2 Analítica    */ ['full', 'full', 'none', 'read'],
-    /* M3 Políticas    */ ['full', 'read', 'none', 'read'],
-    /* M4 Orquestación */ ['full', 'full', 'none', 'read'],
-    /* M5 Gestión Casos*/ ['full', 'full', 'full', 'read'],
-    /* M6 Recaudo      */ ['full', 'full', 'full', 'read'],
-    /* M7 Reportes     */ ['full', 'full', 'read', 'full'],
-    /* Configuración   */ ['full', 'none', 'none', 'read'],
+    /!* Dashboard       *!/ ['full', 'full', 'full', 'read'],
+    /!* M1 Integración  *!/ ['full', 'read', 'none', 'read'],
+    /!* M2 Analítica    *!/ ['full', 'full', 'none', 'read'],
+    /!* M3 Políticas    *!/ ['full', 'read', 'none', 'read'],
+    /!* M4 Orquestación *!/ ['full', 'full', 'none', 'read'],
+    /!* M5 Gestión Casos*!/ ['full', 'full', 'full', 'read'],
+    /!* M6 Recaudo      *!/ ['full', 'full', 'full', 'read'],
+    /!* M7 Reportes     *!/ ['full', 'full', 'read', 'full'],
+    /!* Configuración   *!/ ['full', 'none', 'none', 'read'],
   ];
 
   permMatrix = signal<PermLevel[][]>(
     this.defaultPermMatrix.map(row => [...row])
   );
 
-  /** Cycle a cell through full → read → none → full. Admin col (0) always stays 'full'. */
+  /!** Cycle a cell through full → read → none → full. Admin col (0) always stays 'full'. *!/
   cyclePerm(mi: number, ri: number): void {
     if (ri === 0) return;   // Admin is always full — cannot be changed
     const cycle: PermLevel[] = ['full', 'read', 'none'];
@@ -492,7 +485,7 @@ export class SettingsComponent implements OnInit {
   chipText(p: PermLevel): string {
     return p === 'full' ? 'Acceso' : p === 'read' ? 'Lectura' : '—';
   }
-
+*/
   // ── SECURITY POLICIES ──────────────────────────────────────────────────────
   securityPolicies = signal<SecurityPolicy[]>([
     { label: 'Longitud mínima de contraseña',      value: '12',         description: 'Caracteres mínimos requeridos por política interna',          editable: true,  icon: '🔑' },

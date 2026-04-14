@@ -649,7 +649,7 @@
     <div class="tab-content page-enter">
 
       <!-- Role Summary Cards -->
-      <div class="grid-4 mb-6">
+      <!--<div class="grid-4 mb-6">
         @for (role of [
           { label: 'Administradores', icon: '👑', color: '#ef4444', key: 'Administrador',   desc: 'Acceso total al sistema' },
           { label: 'Supervisores',    icon: '🎯', color: '#f59e0b', key: 'Supervisor',      desc: 'Gestión y reportes' },
@@ -665,7 +665,7 @@
             </div>
           </div>
         }
-      </div>
+      </div>-->
 
       <!-- Users Table -->
       <div class="card section-card">
@@ -805,9 +805,9 @@
         } <!-- /usersTableOpen -->
 
         <!-- Permissions Matrix — Editable por Administrador -->
-        <div class="permissions-section">
+        <!--<div class="permissions-section">
 
-          <!-- Section header — colapsable -->
+          &lt;!&ndash; Section header — colapsable &ndash;&gt;
           <div class="perm-section-header">
             <div>
               <h5 class="perm-section-title">Matriz de Permisos por Módulo</h5>
@@ -817,9 +817,9 @@
               </p>
             </div>
             <div class="perm-header-actions">
-              <button class="perm-reset-btn" (click)="resetPermMatrix()" title="Restaurar valores predeterminados">
+              &lt;!&ndash;<button class="perm-reset-btn" (click)="resetPermMatrix()" title="Restaurar valores predeterminados">
                 <span class="perm-reset-icon">↺</span> Restablecer
-              </button>
+              </button>&ndash;&gt;
               <button class="collapse-btn" type="button"
                 (click)="permMatrixOpen.update(v => !v)"
                 [attr.aria-expanded]="permMatrixOpen()">
@@ -829,7 +829,7 @@
           </div>
 
           @if (permMatrixOpen()) {
-          <!-- Legend pills -->
+          &lt;!&ndash; Legend pills &ndash;&gt;
           <div class="perm-legend-bar">
             <span class="pml-label">Nivel de acceso:</span>
             <span class="pml-chip pml-full">
@@ -844,8 +844,8 @@
             <span class="pml-hint">· Clic en celda para cambiar</span>
           </div>
 
-          <!-- Matrix table -->
-          <div class="perm-matrix-wrapper">
+          &lt;!&ndash; Matrix table &ndash;&gt;
+          &lt;!&ndash;<div class="perm-matrix-wrapper">
             <table class="perm-matrix-table">
               <thead>
                 <tr>
@@ -892,10 +892,10 @@
                 }
               </tbody>
             </table>
-          </div>
-          } <!-- /permMatrixOpen -->
+          </div>&ndash;&gt;
+          } &lt;!&ndash; /permMatrixOpen &ndash;&gt;
 
-          <!-- Save action bar -->
+          &lt;!&ndash; Save action bar &ndash;&gt;
           <div class="perm-save-bar">
             <div class="psb-left">
               @if (savedOk()) {
@@ -918,7 +918,7 @@
             </button>
           </div>
 
-        </div>
+        </div>-->
 
       </div>
     </div>
