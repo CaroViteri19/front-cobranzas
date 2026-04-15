@@ -1,0 +1,121 @@
+<div class="tab-content page-enter">
+  <div class="card section-card mb-6">
+    <div class="section-header">
+      <div>
+        <h4 class="section-sub">Matriz de Estados de Caso</h4>
+        <p class="section-hint">Definicion del flujo de ciclo de vida y transiciones validas.</p>
+      </div>
+      <button class="btn-accent btn-sm" (click)="showNewStatus.set(!showNewStatus())">
+        {{ showNewStatus() ? 'Cancelar' : '+ Nuevo Estado' }}
+      </button>
+    </div>
+
+    @if (showNewStatus()) {
+      <div class="inline-form">
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input class="input" [(ngModel)]="newStatus.name" placeholder="Ej: En Cobro Judicial" />
+          </div>
+          <div class="form-group">
+            <label>Descripcion</label>
+            <input class="input" [(ngModel)]="newStatus.description" placeholder="Descripcion breve" />
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <div class="color-picker-row">
+              <input type="color" class="color-picker" [(ngModel)]="newStatus.color" />
+              <code class="color-hex">{{ newStatus.color }}</code>
+            </div>
+          </div>
+        </div>
+        <div class="inline-form-actions">
+          <button class="btn-secondary btn-sm" (click)="showNewStatus.set(false)">Cancelar</button>
+          <button class="btn-primary btn-sm" (click)="addStatus()">Agregar</button>
+        </div>
+      </div>
+    }
+
+    @if (deleteStatusError()) {
+      <div class="error-banner">{{ deleteStatusError() }}</div>
+    }
+
+    <div class="transition-matrix">
+      <div class="tm-header">
+        <span>Estado</span>
+        <span>Tipo</span>
+        <span>Puede venir de</span>
+        <span>Puede pasar a</span>
+        <span>Casos</span>
+        <span>Acciones</span>
+      </div>
+
+      @for (st of caseStatuses(); track st.id) {
+        <div class="tm-row" [class.tm-row-protected]="statusHasCases(st.id)">
+          <div class="tm-status-cell">
+            <span class="st-dot" [style.background]="st.color"></span>
+            <div>
+              <strong class="st-name">{{ st.name }}</strong>
+              <small class="st-id-sm">{{ st.id }}</small>
+            </div>
+          </div>
+
+          <div class="tm-type-cell">
+            @if (st.isInitial) {
+              <span class="badge badge-success">Inicial</span>
+            } @else if (st.isFinal) {
+              <span class="badge badge-warning">Final</span>
+            } @else {
+              <span class="badge">Intermedio</span>
+            }
+          </div>
+
+          <div class="tm-flows-cell">
+            @if ((st.predecessors?.length ?? 0) > 0) {
+              <div class="tm-chips">
+                @for (prevName of statusNames(st.predecessors).split(', '); track prevName) {
+                  <span class="tm-chip">{{ prevName }}</span>
+                }
+              </div>
+            } @else {
+              <span class="tm-empty">—</span>
+            }
+          </div>
+
+          <div class="tm-flows-cell">
+            @if ((st.successors?.length ?? 0) > 0) {
+              <div class="tm-chips">
+                @for (nextName of statusNames(st.successors).split(', '); track nextName) {
+                  <span class="tm-chip">{{ nextName }}</span>
+                }
+              </div>
+            } @else {
+              <span class="tm-empty">—</span>
+            }
+          </div>
+
+          <div class="tm-col-center" data-label="Casos">
+            <span
+              class="cases-count"
+              [class.cases-count-active]="statusCasesCount(st.id) > 0"
+              [class.cases-count-zero]="statusCasesCount(st.id) === 0"
+            >
+              {{ statusCasesCount(st.id) }}
+            </span>
+          </div>
+
+          <div class="tm-col-center tm-actions" data-label="Acciones">
+            <button class="btn-icon-sm danger" (click)="deleteStatus(st.id)" title="Eliminar estado">🗑</button>
+          </div>
+        </div>
+      }
+
+      <div class="tm-legend">
+        <div class="tm-legend-item"><span class="badge badge-success">Inicial</span> Inicio del flujo</div>
+        <div class="tm-legend-item"><span class="badge">Intermedio</span> Estado operativo</div>
+        <div class="tm-legend-item"><span class="badge badge-warning">Final</span> Cierre o castigo</div>
+      </div>
+    </div>
+  </div>
+</div>
+

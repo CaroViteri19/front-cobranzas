@@ -1,0 +1,154 @@
+<div class="tab-content page-enter">
+  <div class="card section-card mb-6">
+    <div class="section-header">
+      <div>
+        <h4 class="section-sub">Gestión de Usuarios y Roles</h4>
+        <p class="section-hint">Control de acceso por rol para módulos del sistema.</p>
+      </div>
+      <button class="btn-accent btn-sm" (click)="showNewUser.set(!showNewUser())">
+        {{ showNewUser() ? 'Cancelar' : '+ Nuevo Usuario' }}
+      </button>
+    </div>
+
+    @if (showNewUser()) {
+      <div class="inline-form">
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input class="input" [(ngModel)]="newUser.fullName" placeholder="Nombre completo" />
+          </div>
+          <div class="form-group">
+            <label>Usuario</label>
+            <input class="input" [(ngModel)]="newUser.username" placeholder="usuario" />
+          </div>
+
+          <div class="form-group">
+            <label>Identificacion</label>
+            <input class="input" [(ngModel)]="newUser.identification" placeholder="Cedula o NIT" />
+          </div>
+          <div class="form-group">
+            <label>Correo</label>
+            <input class="input" [(ngModel)]="newUser.email" placeholder="correo@dominio.com" />
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Rol</label>
+            <select class="input" [(ngModel)]="newUser.roleId">
+              <option value="">Seleccione rol...</option>
+              @for (r of availableRoles(); track r.id) {
+                <option [value]="r.id">{{ r.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Contrasena</label>
+            <div style="display:flex; gap:8px;">
+              <input
+                class="input"
+                [type]="showNewUserPwd() ? 'text' : 'password'"
+                [(ngModel)]="newUser.password"
+                placeholder="Min. 12 caracteres + 1 especial"
+              />
+              <button type="button" class="btn-secondary btn-sm" (click)="showNewUserPwd.set(!showNewUserPwd())">
+                {{ showNewUserPwd() ? 'Ocultar' : 'Ver' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        @if (userError()) {
+          <div class="error-banner">{{ userError() }}</div>
+        }
+
+        <div class="inline-form-actions">
+          <button class="btn-secondary btn-sm" (click)="showNewUser.set(false)">Cancelar</button>
+          <button class="btn-primary btn-sm" [disabled]="savingUser()" (click)="addUser()">
+            @if (savingUser()) {
+              <span class="spinner-sm"></span>
+            }
+            Crear usuario
+          </button>
+        </div>
+      </div>
+    }
+
+    <div class="grid cards-grid mb-6">
+      <div class="card">
+        <p class="role-label">Usuarios activos</p>
+        <h3 class="role-count">{{ activeUsersCount() }}</h3>
+      </div>
+
+      @for (role of roleOptions; track role) {
+        <div class="card">
+          <p class="role-label">{{ role }}</p>
+          <h3 class="role-count">{{ roleCount(role) }}</h3>
+        </div>
+      }
+    </div>
+
+    <div class="collapse-trigger" (click)="usersTableOpen.set(!usersTableOpen())">
+      <div>
+        <h4 class="section-sub">Tabla de Usuarios</h4>
+        <p class="section-hint">Visualiza usuarios, rol, estado y ultimo acceso.</p>
+      </div>
+      <div class="collapse-right">
+        <span class="collapse-count">{{ users().length }} registros</span>
+        <button class="collapse-btn" type="button">{{ usersTableOpen() ? '▼' : '▶' }}</button>
+      </div>
+    </div>
+
+    @if (usersTableOpen()) {
+      <div class="ut-scroll-wrapper">
+        <div class="users-table">
+          <div class="ut-header">
+            <span>Usuario</span>
+            <span>Correo</span>
+            <span>Rol</span>
+            <span>Ultimo acceso</span>
+            <span>Estado</span>
+            <span>Acciones</span>
+          </div>
+
+          @for (u of users(); track u.id) {
+            <div class="ut-row">
+              <div class="ut-name-cell">
+                <div class="ut-avatar">{{ u.name.charAt(0) }}</div>
+                <div>
+                  <div class="ut-name">{{ u.name }}</div>
+                  <div class="ut-id">{{ u.id }}</div>
+                </div>
+              </div>
+
+              <div class="ut-email">{{ u.email }}</div>
+
+              <div class="ut-role">
+                <span class="badge">{{ u.role }}</span>
+              </div>
+
+              <div class="ut-login">{{ u.lastLogin }}</div>
+
+              <div class="ut-status">
+                @if (u.status === 'Activo') {
+                  <span class="badge badge-success">Activo</span>
+                } @else {
+                  <span class="badge badge-warning">Inactivo</span>
+                }
+              </div>
+
+              <div class="ut-actions">
+                <button class="btn-secondary btn-xs" (click)="toggleUserStatus(u.id)">
+                  {{ u.status === 'Activo' ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button class="btn-secondary btn-xs" (click)="removeUser(u.id)">Eliminar</button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
+

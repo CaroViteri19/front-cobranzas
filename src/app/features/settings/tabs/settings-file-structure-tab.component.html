@@ -1,0 +1,62 @@
+<div class="tab-content page-enter">
+  <div class="card section-card">
+    <div class="section-header">
+      <div>
+        <h4 class="section-sub">Estructura de Archivo Fuente</h4>
+        <p class="section-hint">Formato oficial para integracion masiva de cartera al sistema.</p>
+      </div>
+      <div class="file-header-actions">
+        <button class="btn-secondary btn-sm">Descargar Plantilla</button>
+        <button class="btn-accent btn-sm">Exportar Diccionario</button>
+      </div>
+    </div>
+
+    <div class="format-summary">
+      <div class="fs-item">
+        <span class="fs-label">Formato</span>
+        <span class="fs-value">CSV UTF-8</span>
+      </div>
+      <div class="fs-item">
+        <span class="fs-label">Separador</span>
+        <code class="fs-code">;</code>
+      </div>
+      <div class="fs-item">
+        <span class="fs-label">Campos requeridos</span>
+        <span class="fs-value">{{ requiredCount }}</span>
+      </div>
+      <div class="fs-item">
+        <span class="fs-label">Campos opcionales</span>
+        <span class="fs-value">{{ optionalCount }}</span>
+      </div>
+      <div class="fs-item">
+        <span class="fs-label">Layout</span>
+        <span class="fs-value">v2.3</span>
+      </div>
+    </div>
+
+    <div class="file-fields-table">
+      <div class="ff-header">
+        <span>Columna</span>
+        <span>Tipo</span>
+        <span>Req.</span>
+        <span>Descripcion</span>
+      </div>
+
+      @for (field of fileFields; track field.col) {
+        <div class="ff-row" [class.required-row]="field.req">
+          <code class="ff-col">{{ field.col }}</code>
+          <code class="ff-type">{{ field.type }}</code>
+          <div class="ff-req">
+            @if (field.req) {
+              <span class="badge badge-success">Obligatorio</span>
+            } @else {
+              <span class="badge">Opcional</span>
+            }
+          </div>
+          <div class="ff-desc">{{ field.desc }}</div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
