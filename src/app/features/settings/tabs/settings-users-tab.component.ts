@@ -51,6 +51,8 @@ export class SettingsUsersTabComponent implements OnInit {
   newUser = {
     fullName: '',
     username: '',
+    typeDocument: '',
+    document: null,
     email: '',
     password: '',
     roleId: '',
@@ -127,6 +129,8 @@ export class SettingsUsersTabComponent implements OnInit {
       this.newUser = {
         fullName: '',
         username: '',
+        typeDocument: '',
+        document: null,
         email: '',
         password: '',
         roleId: '',
