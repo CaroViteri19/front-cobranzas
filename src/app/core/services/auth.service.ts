@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_PATHS } from '../config/api.config';
 
 /** Respuesta de autenticación que devuelve el backend Spring Boot. */
 export interface AuthResponse {
@@ -21,7 +22,7 @@ export interface AuthSession {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http   = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/v1/auth';
+  private apiUrl = API_PATHS.auth;
   private readonly SESSION_KEY = 'auth_session';
   private readonly TAB_ID_KEY = 'auth_tab_id';
   private readonly CLOSE_MARKER_KEY = 'auth_tab_closed_marker';

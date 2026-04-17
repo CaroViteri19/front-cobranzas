@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_PATHS } from '../config/api.config';
 
 // ── DTOs que reflejan el contrato del backend ─────────────────────────────────
 
@@ -40,7 +41,7 @@ export interface RegisterResponse {
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private http   = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/v1/auth';
+  private apiUrl = API_PATHS.auth;
 
   /**
    * Obtiene los roles disponibles en el sistema.

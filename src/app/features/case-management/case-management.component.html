@@ -7,17 +7,7 @@
       <p class="section-subtitle">Bitácora de gestión, desborde IA, reasignación manual y seguimiento de acuerdos.</p>
     </div>
     <div class="header-actions">
-      <!-- Role switcher (demo only) -->
-      <div class="role-switcher">
-        <span class="role-label-sm">Rol demo:</span>
-        <select class="form-select filter-select" [value]="currentRole()"
-          (change)="currentRole.set($any($event.target).value)">
-          <option>Administrador</option>
-          <option>Supervisor</option>
-          <option>Agente</option>
-          <option>Auditor</option>
-        </select>
-      </div>
+      <span class="role-label-sm">Rol: <strong>{{ currentRole() }}</strong></span>
       <select class="form-select filter-select" (change)="filterStatus.set($any($event.target).value)">
         <option value="">Todos los estados</option>
         @for (s of store.caseStatuses(); track s.id) {
@@ -25,6 +15,70 @@
         }
       </select>
     </div>
+  </div>
+
+  <!-- ── Loader: cargar cliente/asociado desde el backend ────────────── -->
+  <div class="card loader-card">
+    <div class="collapse-trigger" (click)="loaderOpen.update(v => !v)">
+      <h4 class="card-title">🔎 Cargar asociado desde el backend</h4>
+      <button class="collapse-btn" type="button" [attr.aria-expanded]="loaderOpen()">
+        {{ loaderOpen() ? '▲' : '▼' }}
+      </button>
+    </div>
+
+    @if (loaderOpen()) {
+      <p class="loader-hint">
+        Busca un cliente real (ClientController) y sus obligaciones (ObligationController)
+        y se agrega automáticamente como un caso nuevo sobre los datos existentes.
+      </p>
+
+      <div class="loader-tabs">
+        <button type="button"
+                [class.active]="loaderMode() === 'document'"
+                (click)="toggleLoaderMode('document')">Por documento</button>
+        <button type="button"
+                [class.active]="loaderMode() === 'id'"
+                (click)="toggleLoaderMode('id')">Por ID cliente</button>
+      </div>
+
+      <div class="loader-form">
+        @if (loaderMode() === 'document') {
+          <div class="loader-doc-group">
+            <select class="form-select"
+                    [ngModel]="loaderDocType()"
+                    (ngModelChange)="loaderDocType.set($event)">
+              @for (t of documentTypes; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+            <input class="form-input"
+                   type="text"
+                   [ngModel]="loaderDocNum()"
+                   (ngModelChange)="loaderDocNum.set($event)"
+                   placeholder="Número de documento" />
+          </div>
+        } @else {
+          <input class="form-input"
+                 type="number"
+                 [ngModel]="loaderId()"
+                 (ngModelChange)="loaderId.set($event)"
+                 placeholder="ID interno (ej. 12)" />
+        }
+
+        <button class="btn-accent"
+                (click)="cargarDesdeBackend()"
+                [disabled]="loaderLoading()">
+          {{ loaderLoading() ? 'Cargando…' : 'Cargar asociado' }}
+        </button>
+      </div>
+
+      @if (loaderError()) {
+        <div class="loader-msg loader-err">⚠️ {{ loaderError() }}</div>
+      }
+      @if (loaderInfo()) {
+        <div class="loader-msg loader-ok">✅ {{ loaderInfo() }}</div>
+      }
+    }
   </div>
 
   <!-- Summary Stats (live from signals) -->
@@ -76,6 +130,19 @@
       </div>
 
       @if (casesTableOpen()) {
+        @if (pageLoading()) {
+          <p class="page-status">Cargando página {{ currentPage() + 1 }}…</p>
+        }
+        @if (pageError()) {
+          <div class="loader-msg loader-err">⚠️ {{ pageError() }}</div>
+        }
+        @if (!pageLoading() && filteredCases().length === 0 && !pageError()) {
+          <p class="page-status empty">
+            No hay clientes registrados en la base de datos todavía.
+            Usa la carga masiva (M1) o el loader de arriba para agregar alguno.
+          </p>
+        }
+
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
@@ -150,6 +217,33 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pie de paginación -->
+        @if (totalPages() > 0) {
+          <div class="pagination">
+            <span class="pagination-info">{{ pageRange() }}</span>
+
+            <div class="pagination-controls">
+              <button type="button"
+                      class="pg-btn"
+                      (click)="prevPage()"
+                      [disabled]="currentPage() === 0 || pageLoading()">‹</button>
+
+              @for (p of pageNumbers(); track p) {
+                <button type="button"
+                        class="pg-btn"
+                        [class.active]="p === currentPage()"
+                        (click)="goToPage(p)"
+                        [disabled]="pageLoading()">{{ p + 1 }}</button>
+              }
+
+              <button type="button"
+                      class="pg-btn"
+                      (click)="nextPage()"
+                      [disabled]="currentPage() >= totalPages() - 1 || pageLoading()">›</button>
+            </div>
+          </div>
+        }
       }
     </div>
 
@@ -266,16 +360,20 @@
           <!-- Activity Log -->
           <div class="activity-section">
             <p class="form-label mb-2">Actividad Reciente (M5)</p>
-            @for (entry of activityLog; track entry.time) {
-              <div class="activity-entry">
-                <div class="ae-user" [class.ae-ia]="entry.user.includes('IA') || entry.user === 'Supervisor'">
-                  {{ entry.user[0] }}
+            @if (activityLog.length === 0) {
+              <p class="activity-empty">Sin actividad registrada aún.</p>
+            } @else {
+              @for (entry of activityLog; track entry.time) {
+                <div class="activity-entry">
+                  <div class="ae-user" [class.ae-ia]="entry.user.includes('IA') || entry.user === 'Supervisor'">
+                    {{ entry.user[0] }}
+                  </div>
+                  <div class="ae-body">
+                    <p class="ae-action">{{ entry.action }} — <em>{{ entry.target }}</em></p>
+                    <p class="ae-user-name">{{ entry.user }} · {{ entry.time }}</p>
+                  </div>
                 </div>
-                <div class="ae-body">
-                  <p class="ae-action">{{ entry.action }} — <em>{{ entry.target }}</em></p>
-                  <p class="ae-user-name">{{ entry.user }} · {{ entry.time }}</p>
-                </div>
-              </div>
+              }
             }
           </div>
 
