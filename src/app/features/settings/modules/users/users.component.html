@@ -1,0 +1,290 @@
+<!-- ============================================================================
+     MÓDULO DE GESTIÓN DE USUARIOS - TEMPLATE
+     ============================================================================
+     Este template renderiza:
+     1. Header con botón para crear usuario
+     2. Formulario inline para crear usuario
+     3. Cards con estadísticas (usuarios activos por rol)
+     4. Tabla plegable de usuarios
+     ============================================================================ -->
+
+<div class="tab-content page-enter">
+  <div class="card section-card mb-6">
+
+    <!-- ======================================================================
+         HEADER - Título y botón para crear usuario
+         ====================================================================== -->
+    <div class="section-header">
+      <div>
+        <h4 class="section-sub">Gestión de Usuarios y Roles</h4>
+        <p class="section-hint">Control de acceso por rol para módulos del sistema.</p>
+      </div>
+      <!-- Botón que alterna entre mostrar/ocultar el formulario de crear usuario -->
+      <button class="btn-accent btn-sm" (click)="showNewUser.set(!showNewUser())">
+        {{ showNewUser() ? 'Cancelar' : '+ Nuevo Usuario' }}
+      </button>
+    </div>
+
+    <!-- ======================================================================
+         FORMULARIO INLINE - Crear nuevo usuario
+         Se muestra solo si showNewUser() es true
+         ====================================================================== -->
+    @if (showNewUser()) {
+      <div class="inline-form">
+        <!-- Primera fila: 3 campos de datos personales -->
+        <div class="form-row-3">
+          <!-- Campo: Nombre completo -->
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input class="input" [(ngModel)]="newUser.fullName" placeholder="Nombre completo" />
+          </div>
+
+          <!-- Campo: Usuario (nombre de usuario) -->
+          <div class="form-group">
+            <label>Usuario</label>
+            <input class="input" [(ngModel)]="newUser.username" placeholder="usuario" />
+          </div>
+
+          <!-- Campo: Tipo de documento (CC, NIT, CE, TI) -->
+          <div>
+            <label>Tipo Documento</label>
+            <select class="input" [(ngModel)]="newUser.typeDocument">
+              <option value="">Seleccione tipo...</option>
+              <option value="CC">Cédula de Ciudadanía</option>
+              <option value="NIT">Número de Identificación Tributaria</option>
+              <option value="CE">Cédula de Extranjería</option>
+              <option value="TI">Tarjeta de Identidad</option>
+            </select>
+          </div>
+
+          <!-- Campo: Número de documento -->
+          <div>
+            <label>Documento</label>
+            <input class="input" [(ngModel)]="newUser.document" placeholder="Número de documento" />
+          </div>
+
+          <!-- Campo: Identificación (duplicado, puede ser mejorado después) -->
+          <div class="form-group">
+            <label>Identificacion</label>
+            <input class="input" [(ngModel)]="newUser.document" placeholder="Cedula o NIT" />
+          </div>
+
+          <!-- Campo: Email -->
+          <div class="form-group">
+            <label>Correo</label>
+            <input class="input" [(ngModel)]="newUser.email" placeholder="correo@dominio.com" />
+          </div>
+        </div>
+
+        <!-- Segunda fila: 2 campos (Rol y Contraseña) -->
+        <div class="form-row-2">
+          <!-- Campo: Rol del usuario -->
+          <div class="form-group">
+            <label>Rol</label>
+            <select class="input" [(ngModel)]="newUser.roleId">
+              <option value="">Seleccione rol...</option>
+              <!-- Mostrar cada rol disponible como opción -->
+              @for (r of availableRoles(); track r.id) {
+                <option [value]="r.id">{{ r.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Campo: Contraseña (con botón para mostrar/ocultar) -->
+          <div class="form-group">
+            <label>Contrasena</label>
+            <div style="display:flex; gap:8px;">
+              <!-- Input que alterna entre tipo "password" y "text" -->
+              <input
+                class="input"
+                [type]="showNewUserPwd() ? 'text' : 'password'"
+                [(ngModel)]="newUser.password"
+                placeholder="Min. 12 caracteres + 1 especial"
+              />
+              <!-- Botón para mostrar/ocultar contraseña -->
+              <button type="button" class="btn-secondary btn-sm" (click)="showNewUserPwd.set(!showNewUserPwd())">
+                {{ showNewUserPwd() ? 'Ocultar' : 'Ver' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mostrar error si existe -->
+        @if (userError()) {
+          <div class="error-banner">{{ userError() }}</div>
+        }
+
+        <!-- Botones de acción: Cancelar y Crear usuario -->
+        <div class="inline-form-actions">
+          <button class="btn-secondary btn-sm" (click)="showNewUser.set(false)">Cancelar</button>
+          <!-- Botón Crear que llama a addUser() y muestra spinner mientras se guarda -->
+          <button class="btn-primary btn-sm" [disabled]="savingUser()" (click)="addUser()">
+            @if (savingUser()) {
+              <span class="spinner-sm"></span>
+            }
+            Crear usuario
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ======================================================================
+         ESTADÍSTICAS - Cards con conteos de usuarios
+         ====================================================================== -->
+    <div class="grid cards-grid mb-6">
+      <!-- Card 1: Total de usuarios activos -->
+      <div class="card">
+        <p class="role-label">Usuarios activos</p>
+        <h3 class="role-count">{{ activeUsersCount() }}</h3>
+      </div>
+
+      <!-- Cards: Usuarios por cada rol -->
+      @for (role of roleOptions; track role) {
+        <div class="card">
+          <p class="role-label">{{ role }}</p>
+          <!-- Mostrar cantidad de usuarios con este rol -->
+          <h3 class="role-count">{{ roleCount(role) }}</h3>
+        </div>
+      }
+    </div>
+
+    <!-- ======================================================================
+         TABLA PLEGABLE - Encabezado (se puede expandir/contraer)
+         ====================================================================== -->
+    <div class="collapse-trigger" (click)="usersTableOpen.set(!usersTableOpen())">
+      <div>
+        <h4 class="section-sub">Tabla de Usuarios</h4>
+        <p class="section-hint">Visualiza usuarios, rol, estado y ultimo acceso.</p>
+      </div>
+      <div class="collapse-right">
+        <!-- Mostrar cantidad de registros -->
+        <span class="collapse-count">{{ users().length }} registros</span>
+        <!-- Flecha que indica si está abierto (▼) o cerrado (▶) -->
+        <button class="collapse-btn" type="button">{{ usersTableOpen() ? '▼' : '▶' }}</button>
+      </div>
+    </div>
+
+
+    <!-- ======================================================================
+         TABLA - Lista de usuarios (solo se muestra si usersTableOpen() es true)
+         ====================================================================== -->
+    @if (usersTableOpen()) {
+      <div class="ut-scroll-wrapper">
+        <div class="users-table">
+
+          <!-- Encabezado de la tabla (títulos de columnas) -->
+          <div class="ut-header">
+            <span>Usuario</span>
+            <span>Rol</span>
+            <span>Ultimo acceso</span>
+            <span>Estado</span>
+            <span>Acciones</span>
+          </div>
+
+          <!-- 🆕 LISTA EXPANDIBLE DE USUARIOS (tipo Accordion) -->
+          @for (u of users(); track u.id) {
+            <div class="ut-panel">
+              <!-- ENCABEZADO DEL PANEL (Click para expandir) -->
+              <div
+                class="ut-panel-header"
+                [class.expanded]="expandedUserId() === u.id"
+                (click)="openEditPanel(u)"
+              >
+                <!-- Columna 1: Avatar y nombre del usuario -->
+                <div class="ut-name-cell">
+                  <div class="ut-avatar">{{ u.name.charAt(0) }}</div>
+                  <div>
+                    <div class="ut-name">{{ u.name }}</div>
+                    <div class="ut-id">{{ u.email }}</div>
+                  </div>
+                </div>
+
+                <!-- Columna 3: Rol (como badge) -->
+                <div class="ut-role">
+                  <span class="badge">{{ u.role }}</span>
+                </div>
+
+                <!-- Columna 4: Último acceso (fecha y hora) -->
+                <div class="ut-login">{{ u.lastLogin }}</div>
+
+                <!-- Columna 5: Estado (Activo/Inactivo con color) -->
+                <div class="ut-status">
+                  @if (u.status === 'Activo') {
+                    <span class="badge badge-success">Activo</span>
+                  } @else {
+                    <span class="badge badge-warning">Inactivo</span>
+                  }
+                </div>
+
+                <!-- Ícono de expansión -->
+                <div class="ut-expand-icon">
+                  {{ expandedUserId() === u.id ? '▼' : '▶' }}
+                </div>
+              </div>
+
+              <!-- 🆕 CONTENIDO EXPANDIBLE (Editor) -->
+              @if (expandedUserId() === u.id && editingUser()) {
+                <div class="ut-panel-content">
+                  <!-- Formulario de edición -->
+                  <div class="edit-form">
+                    <!-- Campo: Email -->
+                    <div class="form-group">
+                      <label>Correo Electrónico</label>
+                      <input
+                        class="input"
+                        [(ngModel)]="editingUser().email"
+                        type="email"
+                        placeholder="correo@dominio.com"
+                      />
+                    </div>
+
+                    <!-- Campo: Rol (solo lectura) -->
+                    <div class="form-group">
+                      <label>Rol</label>
+                      <div class="readonly-field">{{ editingUser().role }}</div>
+                    </div>
+
+                    <!-- Campo: Estado -->
+                    <div class="form-group">
+                      <label>Estado</label>
+                      <select class="input" [(ngModel)]="editingUser().status">
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                      </select>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="edit-actions">
+                      <button
+                        class="btn-secondary btn-sm"
+                        (click)="closeEditPanel()"
+                        [disabled]="savingEdit()"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        class="btn-primary btn-sm"
+                        (click)="saveUserChanges()"
+                        [disabled]="savingEdit()"
+                      >
+                        @if (savingEdit()) {
+                          <span class="spinner-sm"></span>
+                        }
+                        {{ savingEdit() ? 'Guardando...' : 'Guardar Cambios' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+</div>
+
+
+
+

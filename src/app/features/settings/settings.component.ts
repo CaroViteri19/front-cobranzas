@@ -2,10 +2,10 @@ import { Component, ViewEncapsulation, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SettingsCaseStatusesTabComponent } from './tabs/settings-case-statuses-tab.component';
 import { SettingsFileStructureTabComponent } from './tabs/settings-file-structure-tab.component';
-import { SettingsUsersTabComponent } from './tabs/settings-users-tab.component';
 import { SettingsPoliciesTabComponent } from './tabs/settings-policies-tab.component';
 import { SettingsAssignmentRulesTabComponent } from './tabs/settings-assignment-rules-tab.component';
 import { SettingsSecurityTabComponent } from './tabs/settings-security-tab.component';
+import { UsersComponent } from './modules/users/users.component';
 
 export type SettingsTab =
   | 'policies'
@@ -29,7 +29,7 @@ interface SettingsTabConfig {
     SettingsCaseStatusesTabComponent,
     SettingsFileStructureTabComponent,
     SettingsAssignmentRulesTabComponent,
-    SettingsUsersTabComponent,
+    UsersComponent,
     SettingsSecurityTabComponent,
   ],
   templateUrl: './settings.component.html',

@@ -1,0 +1,149 @@
+<div class="tab-content page-enter">
+  <div class="card section-card mb-6">
+    <div class="section-header">
+      <div>
+        <h4 class="section-sub">Reglas de Contacto (Ley 2300)</h4>
+        <p class="section-hint">Parámetros obligatorios para cumplimiento normativo.</p>
+      </div>
+      <button class="btn-accent btn-sm" (click)="showAddRule.set(!showAddRule())">
+        {{ showAddRule() ? 'Cancelar' : '+ Nueva Regla' }}
+      </button>
+    </div>
+
+    @if (showAddRule()) {
+      <div class="inline-form">
+        <div class="form-row-3">
+          <div>
+            <label>Nombre de la Regla</label>
+            <input class="input" [(ngModel)]="newRule.rule" />
+          </div>
+          <div>
+            <label>Valor / Parámetro</label>
+            <input class="input" [(ngModel)]="newRule.value" />
+          </div>
+          <div>
+            <label>Categoría</label>
+            <select class="input" [(ngModel)]="newRule.type">
+              <option>General</option>
+              <option>Horario</option>
+              <option>Frecuencia</option>
+              <option>Exclusion</option>
+            </select>
+          </div>
+        </div>
+        <div class="inline-form-actions">
+          <button class="btn-secondary btn-sm" (click)="showAddRule.set(false)">Cancelar</button>
+          <button class="btn-primary btn-sm" (click)="addRule()">Agregar Regla</button>
+        </div>
+      </div>
+    }
+
+    <div class="contact-grid">
+      <div class="time-window-card">
+        <h5 class="tw-title">Ventanas Horarias</h5>
+        <div class="tw-rows">
+          <div class="tw-row"><span>Lunes a Viernes</span><span>07:00 - 19:00</span></div>
+          <div class="tw-row"><span>Sábados</span><span>08:00 - 15:00</span></div>
+          <div class="tw-row"><span>Domingos y Festivos</span><span class="badge badge-warning">Prohibido</span></div>
+        </div>
+      </div>
+
+      <div class="contact-rules-card">
+        <h5 class="tw-title">Reglas Activas</h5>
+        <div class="contact-rules-list">
+          @for (rule of rules(); track rule.rule; let i = $index) {
+            <div class="contact-rule-row">
+              <div>
+                <div class="cr-name">{{ rule.rule }}</div>
+                <div class="cr-type">{{ rule.type }}</div>
+              </div>
+              <div class="cr-right">
+                <span class="cr-value">{{ rule.value }}</span>
+                <button class="btn-icon-sm danger" (click)="removeRule(i)">🗑</button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card section-card">
+    <div class="section-header">
+      <div>
+        <h4 class="section-sub">Reglas de Asignación Automática</h4>
+        <p class="section-hint">Configure desborde a agentes y nivelación de cargas.</p>
+      </div>
+      <button class="btn-accent btn-sm" (click)="showAddAssignment.set(!showAddAssignment())">
+        {{ showAddAssignment() ? 'Cancelar' : '+ Nueva Regla de Asignación' }}
+      </button>
+    </div>
+
+    @if (showAddAssignment()) {
+      <div class="inline-form">
+        <div class="form-row-4">
+          <div>
+            <label>Nombre</label>
+            <input class="input" [(ngModel)]="newAssignment.name" />
+          </div>
+          <div>
+            <label>Monto mínimo</label>
+            <input class="input" type="number" [(ngModel)]="newAssignment.minAmount" />
+          </div>
+          <div>
+            <label>Intentos fallidos</label>
+            <input class="input" type="number" [(ngModel)]="newAssignment.maxFailedAttempts" />
+          </div>
+          <div>
+            <label>Prioridad</label>
+            <input class="input" type="number" [(ngModel)]="newAssignment.priority" />
+          </div>
+        </div>
+
+        <div>
+          <label>Niveles de riesgo</label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+            @for (risk of riskOptions; track risk) {
+              <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem;">
+                <input
+                  type="checkbox"
+                  [checked]="newAssignment.riskLevels.includes(risk)"
+                  (change)="toggleRiskSelection(risk, $any($event.target).checked)"
+                />
+                {{ risk }}
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="inline-form-actions">
+          <button class="btn-secondary btn-sm" (click)="showAddAssignment.set(false)">Cancelar</button>
+          <button class="btn-primary btn-sm" (click)="addAssignmentRule()">Guardar Regla</button>
+        </div>
+      </div>
+    }
+
+    <div class="rules-list">
+      @for (rule of assignmentRules(); track rule.id) {
+        <div class="rule-card" [class.inactive]="!rule.isActive">
+          <div class="rule-priority">{{ rule.priority }}</div>
+          <div class="rule-info">
+            <div class="rule-name">{{ rule.name }}</div>
+            <div class="rule-tags">
+              <span class="rule-tag">Min: {{ rule.minAmount | number }}</span>
+              <span class="rule-tag">Intentos: {{ rule.maxFailedAttempts }}</span>
+              @for (risk of rule.riskLevels; track risk) {
+                <span class="rule-tag">{{ risk }}</span>
+              }
+            </div>
+          </div>
+          <div class="rule-controls">
+            <span class="rule-status-text">{{ rule.isActive ? 'Activa' : 'Inactiva' }}</span>
+            <button class="btn-icon-sm danger" (click)="removeAssignmentRule(rule.id)">🗑</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
