@@ -223,7 +223,7 @@
               </div>
 
               <!-- 🆕 CONTENIDO EXPANDIBLE (Editor) -->
-              @if (expandedUserId() === u.id && editingUser()) {
+              @if (expandedUserId() === u.id && editingUser(); as user) {
                 <div class="ut-panel-content">
                   <!-- Formulario de edición -->
                   <div class="edit-form">
@@ -232,7 +232,7 @@
                       <label>Correo Electrónico</label>
                       <input
                         class="input"
-                        [(ngModel)]="editingUser().email"
+                        [(ngModel)]="user.email"
                         type="email"
                         placeholder="correo@dominio.com"
                       />
@@ -241,13 +241,13 @@
                     <!-- Campo: Rol (solo lectura) -->
                     <div class="form-group">
                       <label>Rol</label>
-                      <div class="readonly-field">{{ editingUser().role }}</div>
+                      <div class="readonly-field">{{ user.role }}</div>
                     </div>
 
                     <!-- Campo: Estado -->
                     <div class="form-group">
                       <label>Estado</label>
-                      <select class="input" [(ngModel)]="editingUser().status">
+                      <select class="input" [(ngModel)]="user.status">
                         <option value="Activo">Activo</option>
                         <option value="Inactivo">Inactivo</option>
                       </select>
