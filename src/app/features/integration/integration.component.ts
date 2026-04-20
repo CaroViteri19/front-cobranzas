@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IntegrationService } from './integration.service';
 
 interface BatchRecord {
   name: string;
@@ -16,6 +17,8 @@ interface BatchRecord {
   styleUrl: './integration.component.css'
 })
 export class IntegrationComponent {
+  private readonly integrationService = inject(IntegrationService);
+
   uploading = signal(false);
   progress  = signal(0);
   private timer: any;
