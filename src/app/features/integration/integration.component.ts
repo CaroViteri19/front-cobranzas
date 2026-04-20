@@ -1,23 +1,21 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpEventType, HttpErrorResponse } from '@angular/common/http';
-
-import { CargaMasivaService } from '../../core/services/carga-masiva.service';
 import {
-  CARGA_MASIVA_COLUMNS,
-  CargaMasivaResultResponse,
-  RowErrorDTO,
-} from '../../core/models/carga-masiva.model';
+  CargaMasivaService,
+  UploadProgress,
+  RowError,
+} from '../../core/services/carga-masiva.service';
 
-// ── Tipos locales ───────────────────────────────────────────────────────────
+/** Columnas que se muestran en la tabla de errores. */
+const MAX_ERRORS_VISIBLE = 100;
 
-/** Una entrada del historial local (solo memoria, se pierde al refrescar). */
+/** Historial de cargas (en producción vendría de un endpoint). */
 interface BatchRecord {
-  name: string;
-  records: number;
-  errors: number;
-  date: string;
-  status: 'Exitoso' | 'Parcial' | 'Error';
+  name:     string;
+  records:  number;
+  errors:   number;
+  date:     string;
+  status:   'Exitoso' | 'Parcial' | 'Error';
 }
 
 // ── Componente ──────────────────────────────────────────────────────────────
@@ -26,172 +24,181 @@ interface BatchRecord {
   selector: 'app-integration',
   imports: [CommonModule],
   templateUrl: './integration.component.html',
-  styleUrl: './integration.component.css',
+  styleUrl:    './integration.component.css',
 })
 export class IntegrationComponent {
 
-  private readonly cargaMasiva = inject(CargaMasivaService);
+  // ── Dependencias ─────────────────────────────────────────────────────────
+  private cargaService = inject(CargaMasivaService);
 
-  /** Nombres de columnas esperados en el CSV / TXT (AsociadoRowDTO.COLUMN_NAMES). */
-  readonly columnasEsperadas = CARGA_MASIVA_COLUMNS;
+  // ── Estado del proceso de carga ──────────────────────────────────────────
+  readonly uploadState  = signal<UploadProgress | null>(null);
+  readonly selectedFile = signal<File | null>(null);
+  readonly dragOver     = signal(false);
 
-  // ── Estado de la carga actual ───────────────────────────────────────────
-  uploading       = signal(false);
-  progress        = signal(0);
-  archivoNombre   = signal('');
-  resultado       = signal<CargaMasivaResultResponse | null>(null);
-  errorGeneral    = signal('');
-  mostrarErrores  = signal(false);
+  // ── Estado de la tabla de errores ────────────────────────────────────────
+  readonly errorsExpanded  = signal(false);
+  readonly errorFilter     = signal('');
+  readonly errorPage       = signal(0);
+  readonly errorsPerPage   = 20;
 
-  // ── Historial en memoria ────────────────────────────────────────────────
-  batches = signal<BatchRecord[]>([]);
+  // ── Computed ──────────────────────────────────────────────────────────────
+  readonly isUploading = computed(() =>
+    this.uploadState()?.phase === 'uploading' ||
+    this.uploadState()?.phase === 'processing'
+  );
 
-  // ── Endpoints reales expuestos por el backend ───────────────────────────
-  readonly endpoints = [
-    { path: '/api/v1/carga-masiva/upload',   method: 'POST', status: 201, time: 'Activo' },
-    { path: '/api/v1/clients',               method: 'POST', status: 201, time: 'Activo' },
-    { path: '/api/v1/clients/search/id',     method: 'POST', status: 200, time: 'Activo' },
-    { path: '/api/v1/obligations/search/id', method: 'POST', status: 200, time: 'Activo' },
-    { path: '/api/v1/obligations/search/client', method: 'POST', status: 200, time: 'Activo' },
-  ];
+  readonly uploadPercent = computed(() => this.uploadState()?.percent ?? 0);
 
-  // ── Derivados para el template ──────────────────────────────────────────
-  readonly porcentajeExito = computed(() => {
-    const r = this.resultado();
-    if (!r || r.totalRows === 0) return 0;
-    return Math.round((r.totalInserted / r.totalRows) * 100);
+  readonly uploadResult = computed(() => this.uploadState()?.result ?? null);
+
+  readonly allErrors = computed((): RowError[] => {
+    const result = this.uploadResult();
+    if (!result?.errors?.length) return [];
+    return result.errors;
   });
 
-  // ── Handlers de archivo ─────────────────────────────────────────────────
+  readonly filteredErrors = computed((): RowError[] => {
+    const filter = this.errorFilter().toLowerCase();
+    const errors = this.allErrors();
+    if (!filter) return errors;
+    return errors.filter(e =>
+      (e.field?.toLowerCase().includes(filter)) ||
+      e.message.toLowerCase().includes(filter) ||
+      String(e.rowNumber).includes(filter)
+    );
+  });
 
-  abrirSelector(input: HTMLInputElement): void {
-    input.click();
-  }
+  readonly paginatedErrors = computed((): RowError[] => {
+    const start = this.errorPage() * this.errorsPerPage;
+    return this.filteredErrors().slice(start, start + this.errorsPerPage);
+  });
 
-  onArchivoSeleccionado(event: Event): void {
+  readonly totalErrorPages = computed(() =>
+    Math.ceil(this.filteredErrors().length / this.errorsPerPage)
+  );
+
+  readonly phaseLabel = computed(() => {
+    switch (this.uploadState()?.phase) {
+      case 'uploading':   return 'Subiendo archivo...';
+      case 'processing':  return 'Servidor procesando CSV...';
+      case 'done':        return '¡Carga completada!';
+      case 'error':       return 'Carga rechazada';
+      default:            return '';
+    }
+  });
+
+  // ── Historial de cargas ───────────────────────────────────────────────────
+  readonly batches = signal<BatchRecord[]>([
+    { name: 'Lote_Marzo_Q1.csv',    records: 12500, errors: 0,  date: '15 Mar 2024', status: 'Exitoso' },
+    { name: 'Novedades_Nomina.csv', records: 4200,  errors: 12, date: '14 Mar 2024', status: 'Parcial' },
+    { name: 'Ajustes_Saldos.csv',   records: 850,   errors: 0,  date: '12 Mar 2024', status: 'Exitoso' },
+  ]);
+
+  // ── Handlers de archivo ───────────────────────────────────────────────────
+
+  onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-    const archivo = input.files[0];
-    this.cargarArchivo(archivo);
-    input.value = '';
+    const file  = input.files?.[0] ?? null;
+    this.setFile(file);
+    input.value = ''; // Permite re-seleccionar el mismo archivo
   }
 
   onDrop(event: DragEvent): void {
     event.preventDefault();
-    const archivo = event.dataTransfer?.files?.[0];
-    if (archivo) this.cargarArchivo(archivo);
+    this.dragOver.set(false);
+    const file = event.dataTransfer?.files?.[0] ?? null;
+    this.setFile(file);
   }
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
+    this.dragOver.set(true);
   }
 
-  toggleErrores(): void {
-    this.mostrarErrores.update(v => !v);
+  onDragLeave(): void {
+    this.dragOver.set(false);
   }
 
-  /** Etiqueta legible para la severidad (template). */
-  severityLabel(err: RowErrorDTO): string {
-    return err.severity === 'WARNING' ? 'Aviso' : 'Error';
-  }
-
-  // ── Proceso principal ───────────────────────────────────────────────────
-
-  private cargarArchivo(archivo: File): void {
-    const extension = archivo.name.split('.').pop()?.toLowerCase();
-    if (extension !== 'csv' && extension !== 'txt') {
-      this.errorGeneral.set('Solo se aceptan archivos .csv o .txt');
+  private setFile(file: File | null): void {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      this.uploadState.set({
+        phase: 'error',
+        percent: 0,
+        error: 'Solo se aceptan archivos .csv',
+      });
       return;
     }
+    this.selectedFile.set(file);
+    this.uploadState.set(null);
+    this.errorPage.set(0);
+    this.errorFilter.set('');
+  }
 
-    this.uploading.set(true);
-    this.progress.set(0);
-    this.resultado.set(null);
-    this.errorGeneral.set('');
-    this.mostrarErrores.set(false);
-    this.archivoNombre.set(archivo.name);
+  // ── Ejecutar carga ────────────────────────────────────────────────────────
 
-    this.cargaMasiva.upload(archivo).subscribe({
-      next: (event) => {
-        if (event.type === HttpEventType.UploadProgress && event.total) {
-          const pct = Math.round((100 * event.loaded) / event.total);
-          // Reservar 90-100 para el procesamiento del servidor.
-          this.progress.set(Math.min(pct, 90));
-        } else if (event.type === HttpEventType.Response) {
-          this.progress.set(100);
-          const res = event.body as CargaMasivaResultResponse;
-          this.resultado.set(res);
-          this.uploading.set(false);
-          this.agregarAlHistorial(archivo.name, res);
+  startUpload(): void {
+    const file = this.selectedFile();
+    if (!file || this.isUploading()) return;
+
+    this.uploadState.set({ phase: 'uploading', percent: 0 });
+    this.errorPage.set(0);
+    this.errorFilter.set('');
+
+    this.cargaService.upload(file).subscribe({
+      next: (progress) => {
+        this.uploadState.set(progress);
+
+        // Agregar al historial si fue exitoso
+        if (progress.phase === 'done' && progress.result) {
+          this.batches.update(list => [
+            {
+              name:    file.name,
+              records: progress.result!.totalInserted,
+              errors:  0,
+              date:    new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }),
+              status:  'Exitoso',
+            },
+            ...list,
+          ]);
+          this.selectedFile.set(null);
         }
-      },
-      error: (err) => {
-        this.uploading.set(false);
-        this.progress.set(0);
-        this.handleError(err, archivo.name);
       },
     });
   }
 
-  // ── Historial y manejo de error ─────────────────────────────────────────
-
-  private agregarAlHistorial(nombre: string, res: CargaMasivaResultResponse): void {
-    const status: BatchRecord['status'] =
-      res.totalErrors === 0      ? 'Exitoso'
-      : res.totalInserted === 0  ? 'Error'
-      :                            'Parcial';
-
-    const nueva: BatchRecord = {
-      name:    nombre,
-      records: res.totalRows,
-      errors:  res.totalErrors,
-      date:    new Date().toLocaleDateString('es-CO', {
-        day: '2-digit', month: 'short', year: 'numeric',
-      }),
-      status,
-    };
-    this.batches.update(prev => [nueva, ...prev]);
+  resetUpload(): void {
+    this.selectedFile.set(null);
+    this.uploadState.set(null);
+    this.errorPage.set(0);
+    this.errorFilter.set('');
   }
 
-  /**
-   * El backend puede responder con:
-   *  - 422 UnprocessableEntity + body {@link CargaMasivaResultResponse} con errores (ExceptionHandler).
-   *  - 400 BadRequest con {@code {message|error}} para validaciones básicas.
-   *  - 401/403 por falta de token o rol insuficiente.
-   *  - Error de red (status 0).
-   */
-  private handleError(err: unknown, fileName: string): void {
-    if (err instanceof HttpErrorResponse) {
-      // Caso 1: el backend envió un CargaMasivaResultResponse con errores de fila.
-      const body = err.error as Partial<CargaMasivaResultResponse> | undefined;
-      if (body && Array.isArray((body as CargaMasivaResultResponse).errors)) {
-        const resp = body as CargaMasivaResultResponse;
-        this.resultado.set(resp);
-        this.agregarAlHistorial(fileName, resp);
-        return;
-      }
+  // ── Helpers para template ────────────────────────────────────────────────
 
-      // Caso 2: mensaje plano del backend.
-      const msg =
-        (err.error && typeof err.error === 'object' && (err.error.message || err.error.error)) ||
-        err.message;
+  formatBytes(bytes: number): string {
+    if (bytes < 1024)        return bytes + ' B';
+    if (bytes < 1_048_576)   return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1_048_576).toFixed(1) + ' MB';
+  }
 
-      if (err.status === 0) {
-        this.errorGeneral.set('No se puede conectar con el servidor. ¿Está el backend corriendo en el puerto 8080?');
-        return;
-      }
-      if (err.status === 401) {
-        this.errorGeneral.set('Tu sesión expiró. Inicia sesión nuevamente.');
-        return;
-      }
-      if (err.status === 403) {
-        this.errorGeneral.set('No tienes permisos para cargar archivos (se requiere ADMINISTRADOR o SUPERVISOR).');
-        return;
-      }
-      this.errorGeneral.set(msg || `Error ${err.status} al procesar el archivo.`);
-      return;
-    }
+  prevErrorPage(): void {
+    if (this.errorPage() > 0) this.errorPage.update(p => p - 1);
+  }
 
-    this.errorGeneral.set('Error inesperado al conectar con el servidor.');
+  nextErrorPage(): void {
+    if (this.errorPage() < this.totalErrorPages() - 1)
+      this.errorPage.update(p => p + 1);
+  }
+
+  errorRowClass(err: RowError): string {
+    return err.severity === 'WARNING' ? 'err-row-warning' : 'err-row-error';
+  }
+
+  statusBadgeClass(status: string): string {
+    return status === 'Exitoso' ? 'badge-success'
+         : status === 'Error'   ? 'badge-danger'
+         :                        'badge-info';
   }
 }

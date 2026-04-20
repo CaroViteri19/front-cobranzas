@@ -39,8 +39,10 @@ export class StoreService {
   });
 
   /** Count of cases per status — used for deletion guard in Settings */
-  readonly caseCountPerStatus = computed(() => {
-    const counts: Record<string, number> = {};
+  // Partial<Record<...>> permite que los índices no existentes sean 'number | undefined',
+  // lo que justifica el '?? 0' en el template y evita el warning NG8102.
+  readonly caseCountPerStatus = computed((): Partial<Record<string, number>> => {
+    const counts: Partial<Record<string, number>> = {};
     this.cases().forEach(c => {
       counts[c.status] = (counts[c.status] ?? 0) + 1;
     });

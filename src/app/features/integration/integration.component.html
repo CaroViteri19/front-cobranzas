@@ -1,198 +1,288 @@
-<div class="page-enter">
+<div class="page-enter integration-page">
 
-  <!-- ── Header ──────────────────────────────────────────────────────────── -->
-  <div class="module-header">
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="int-header">
     <div>
-      <h2 class="section-title">M1. Integración y Adquisición de Datos</h2>
-      <p class="section-subtitle">Gestión de ingesta vía API y Archivos Batch (TXT/CSV).</p>
+      <h2 class="section-title">M1. Integración — Carga Masiva</h2>
+      <p class="section-subtitle">
+        Importa archivos CSV de cartera para poblar el sistema.
+        Todos los errores se muestran antes de insertar cualquier dato.
+      </p>
     </div>
-    <button class="btn-primary" (click)="abrirSelector(fileInput)" [disabled]="uploading()">
-      <span>📤</span>
-      {{ uploading() ? 'Procesando...' : 'Cargar Archivo Batch' }}
-    </button>
-    <!-- Input oculto para selección de archivo -->
-    <input #fileInput type="file" accept=".csv,.txt" style="display:none"
-           (change)="onArchivoSeleccionado($event)">
+    <div class="int-header-badges">
+      <span class="badge badge-info">CSV · separador coma</span>
+      <span class="badge badge-info">Máx. 50 MB</span>
+      <span class="badge badge-info">Hasta 50,000 filas</span>
+    </div>
   </div>
 
-  <!-- ── Zona drag-and-drop ──────────────────────────────────────────────── -->
-  @if (!uploading() && !resultado()) {
-    <div class="card drop-zone"
-         (dragover)="onDragOver($event)"
-         (drop)="onDrop($event)"
-         (click)="abrirSelector(fileInput)">
-      <div class="drop-icon">📂</div>
-      <p class="drop-title">Arrastra tu archivo aquí o haz clic para seleccionar</p>
-      <p class="drop-hint">Formatos aceptados: <strong>.csv</strong> (separador coma, con encabezados)
-         y <strong>.txt</strong> (separador pipe |, sin encabezados)</p>
-    </div>
-  }
+  <!-- ═══ LAYOUT PRINCIPAL ══════════════════════════════════════════════════ -->
+  <div class="int-layout">
 
-  <!-- ── Error general ──────────────────────────────────────────────────── -->
-  @if (errorGeneral()) {
-    <div class="card alert-error">
-      <span>⚠️</span> {{ errorGeneral() }}
-    </div>
-  }
+    <!-- ──────────── PANEL IZQUIERDO: UPLOAD ──────────── -->
+    <div class="int-upload-col">
 
-  <!-- ── Barra de progreso ───────────────────────────────────────────────── -->
-  @if (uploading()) {
-    <div class="card upload-progress">
-      <div class="progress-header">
-        <span class="progress-label">Procesando: {{ archivoNombre() }}</span>
-        <span class="progress-pct">{{ progress() }}%</span>
-      </div>
-      <div class="progress-bar" style="height:10px;">
-        <div class="progress-bar-fill" [style.width.%]="progress()"></div>
-      </div>
-      <div class="progress-steps">
-        <span [class.active]="progress() >= 25">Validando esquema...</span>
-        <span [class.active]="progress() >= 55">Procesando registros...</span>
-        <span [class.active]="progress() >= 85">Guardando en BD...</span>
-      </div>
-    </div>
-  }
+      <!-- ─── ZONA DE DROP ─────────────────────────────── -->
+      @if (!isUploading() && uploadState()?.phase !== 'done') {
+        <div class="card drop-zone"
+             [class.drag-active]="dragOver()"
+             [class.has-file]="!!selectedFile()"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave()"
+             (drop)="onDrop($event)">
 
-  <!-- ── Panel de resultado ─────────────────────────────────────────────── -->
-  @if (resultado(); as res) {
-    <div class="card result-panel">
-      <div class="result-header">
-        <h4 class="card-title">
-          {{ res.totalErrors === 0 ? '✅' : res.totalInserted === 0 ? '❌' : '⚠️' }}
-          Resultado de Carga: {{ res.fileName || archivoNombre() }}
-        </h4>
-        <button class="btn-primary btn-sm" (click)="abrirSelector(fileInput)">
-          Nueva Carga
-        </button>
-      </div>
+          <div class="drop-icon">📂</div>
 
-      <!-- Métricas -->
-      <div class="metrics-row">
-        <div class="metric-box">
-          <span class="metric-value">{{ res.totalRows | number }}</span>
-          <span class="metric-label">Total filas</span>
+          @if (selectedFile()) {
+            <!-- Archivo seleccionado -->
+            <div class="file-selected">
+              <span class="file-icon">📄</span>
+              <div class="file-info">
+                <span class="file-name">{{ selectedFile()!.name }}</span>
+                <span class="file-size">{{ formatBytes(selectedFile()!.size) }}</span>
+              </div>
+              <button class="file-remove" (click)="resetUpload()" title="Quitar archivo">✕</button>
+            </div>
+          } @else {
+            <!-- Sin archivo -->
+            <p class="drop-title">Arrastra tu CSV aquí</p>
+            <p class="drop-hint">o haz clic para seleccionarlo</p>
+          }
+
+          <label class="btn-accent drop-btn" for="csv-input">
+            {{ selectedFile() ? '📁 Cambiar archivo' : '📁 Seleccionar CSV' }}
+          </label>
+          <input id="csv-input" type="file" accept=".csv"
+                 class="hidden-input" (change)="onFileSelected($event)" />
         </div>
-        <div class="metric-box success">
-          <span class="metric-value">{{ res.totalInserted | number }}</span>
-          <span class="metric-label">Insertados</span>
-        </div>
-        <div class="metric-box" [class.danger]="res.totalErrors > 0">
-          <span class="metric-value">{{ res.totalErrors | number }}</span>
-          <span class="metric-label">Errores</span>
-        </div>
-        <div class="metric-box">
-          <span class="metric-value">{{ porcentajeExito() }}%</span>
-          <span class="metric-label">Tasa de éxito</span>
-        </div>
-      </div>
 
-      <!-- Lista de errores (desplegable) -->
-      @if (res.errors && res.errors.length > 0) {
-        <div class="errors-section">
-          <button class="btn-link" (click)="toggleErrores()">
-            {{ mostrarErrores() ? '▲ Ocultar errores' : '▼ Ver ' + res.errors.length + ' errores' }}
+        <!-- Alerta: error sin lista de filas (archivo inválido, permisos, etc.) -->
+        @if (uploadState()?.phase === 'error' && uploadState()?.error && !allErrors().length) {
+          <div class="alert alert-error">
+            <span class="alert-icon">⚠️</span>
+            <span>{{ uploadState()!.error }}</span>
+          </div>
+        }
+
+        <!-- Botón iniciar carga -->
+        @if (selectedFile()) {
+          <button class="btn-primary upload-btn"
+                  (click)="startUpload()"
+                  [disabled]="isUploading()">
+            🚀 Iniciar Carga
           </button>
-          @if (mostrarErrores()) {
-            <div class="error-list">
-              @for (err of res.errors; track $index) {
-                <div class="error-item">
-                  @if (err.rowNumber > 0) {
-                    <span class="error-fila">Fila {{ err.rowNumber }}</span>
-                  } @else {
-                    <span class="error-fila">Global</span>
-                  }
-                  @if (err.field) {
-                    <span class="error-field">[{{ err.field }}]</span>
-                  }
-                  <span class="error-msg">{{ err.message }}</span>
-                  <span class="badge"
-                        [class.badge-warning]="err.severity === 'WARNING'"
-                        [class.badge-danger]="err.severity === 'ERROR'">
-                    {{ severityLabel(err) }}
-                  </span>
-                </div>
+        }
+      }
+
+      <!-- ─── PROGRESO ──────────────────────────────────── -->
+      @if (isUploading()) {
+        <div class="card progress-card">
+          <div class="progress-header">
+            <span class="progress-phase">{{ phaseLabel() }}</span>
+            <span class="progress-pct">{{ uploadPercent() }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" [style.width.%]="uploadPercent()"></div>
+          </div>
+          <p class="progress-file">{{ selectedFile()?.name }}</p>
+          <div class="spinner-row">
+            <span class="spinner-sm"></span>
+            <span class="spinner-label">
+              @if (uploadState()?.phase === 'uploading') { Transfiriendo al servidor... }
+              @else { Validando y procesando registros... }
+            </span>
+          </div>
+        </div>
+      }
+
+      <!-- ─── RESULTADO: ÉXITO ───────────────────────────── -->
+      @if (uploadState()?.phase === 'done' && uploadResult()) {
+        <div class="card result-card result-ok page-enter">
+          <div class="result-icon">✅</div>
+          <h3 class="result-title">¡Carga exitosa!</h3>
+          <p class="result-file">{{ uploadResult()!.fileName }}</p>
+          <div class="result-stats">
+            <div class="stat-pill">
+              <span class="stat-num">{{ uploadResult()!.totalInserted | number }}</span>
+              <span class="stat-lbl">Registros insertados</span>
+            </div>
+            <div class="stat-pill stat-pill-ok">
+              <span class="stat-num">0</span>
+              <span class="stat-lbl">Errores</span>
+            </div>
+          </div>
+          <button class="btn-secondary" (click)="resetUpload()">
+            ↑ Cargar otro archivo
+          </button>
+        </div>
+      }
+
+    </div><!-- /int-upload-col -->
+
+    <!-- ──────────── PANEL DERECHO: INFO ──────────── -->
+    <div class="int-info-col">
+
+      <!-- ─── ESTRUCTURA DEL CSV ────────────────────────── -->
+      <div class="card schema-card">
+        <div class="schema-header">
+          <h4 class="schema-title">📋 Estructura del CSV</h4>
+          <span class="schema-hint">Separador coma · UTF-8 · con encabezado</span>
+        </div>
+        <div class="schema-table-wrap">
+          <table class="schema-table">
+            <thead>
+              <tr><th>Columna</th><th>Tipo</th><th>Req</th><th>Notas</th></tr>
+            </thead>
+            <tbody>
+              @for (col of [
+                { name:'TIPO_ID',         type:'VARCHAR(2)',    req:true,  note:'CC, NIT, CE, PA' },
+                { name:'NUM_DOCUMENTO',   type:'VARCHAR(20)',   req:true,  note:'Único en BD' },
+                { name:'NOMBRE_COMPLETO', type:'VARCHAR(120)',  req:true,  note:'' },
+                { name:'NUM_OBLIGACION',  type:'VARCHAR(30)',   req:true,  note:'' },
+                { name:'SALDO_TOTAL',     type:'DECIMAL(18,2)', req:true,  note:'Punto como decimal' },
+                { name:'DIAS_MORA',       type:'INTEGER',       req:true,  note:'≥ 0' },
+                { name:'FECHA_VENC',      type:'DATE',          req:true,  note:'YYYYMMDD' },
+                { name:'TELEFONO_1',      type:'VARCHAR(15)',   req:true,  note:'' },
+                { name:'EMAIL',           type:'VARCHAR(80)',   req:false, note:'Único si presente' },
+                { name:'TELEFONO_2',      type:'VARCHAR(15)',   req:false, note:'' },
+                { name:'CIUDAD',          type:'VARCHAR(60)',   req:false, note:'' },
+                { name:'CANAL_PREFERIDO', type:'VARCHAR(20)',   req:false, note:'WhatsApp, SMS, Email, Voz' },
+                { name:'SEGMENTO',        type:'VARCHAR(30)',   req:false, note:'' },
+                { name:'PRODUCTO',        type:'VARCHAR(50)',   req:false, note:'' },
+                { name:'CODIGO_AGENTE',   type:'VARCHAR(10)',   req:false, note:'' }
+              ]; track col.name) {
+                <tr>
+                  <td><code class="col-code">{{ col.name }}</code></td>
+                  <td class="col-type">{{ col.type }}</td>
+                  <td>
+                    @if (col.req) { <span class="badge badge-danger req-badge">Req</span> }
+                    @else         { <span class="badge col-opt">Opt</span> }
+                  </td>
+                  <td class="col-note">{{ col.note }}</td>
+                </tr>
               }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ─── HISTORIAL ──────────────────────────────────── -->
+      <div class="card">
+        <h4 class="section-sub">Historial de cargas</h4>
+        <div class="batch-list">
+          @for (b of batches(); track b.name) {
+            <div class="batch-row">
+              <span class="batch-icon">📦</span>
+              <div class="batch-info">
+                <span class="batch-name">{{ b.name }}</span>
+                <span class="batch-meta">{{ b.records | number }} registros · {{ b.date }}</span>
+              </div>
+              <span class="badge" [class]="statusBadgeClass(b.status)">{{ b.status }}</span>
             </div>
           }
         </div>
+      </div>
+
+    </div><!-- /int-info-col -->
+  </div><!-- /int-layout -->
+
+  <!-- ═══ PANEL DE ERRORES DE VALIDACIÓN ═══════════════════════════════════ -->
+  @if (uploadState()?.phase === 'error' && allErrors().length > 0) {
+    <div class="card error-panel page-enter">
+
+      <!-- Header del panel -->
+      <div class="ep-header">
+        <div>
+          <h4 class="ep-title">
+            ⚠️ {{ allErrors().length }} error{{ allErrors().length !== 1 ? 'es' : '' }} encontrado{{ allErrors().length !== 1 ? 's' : '' }}
+          </h4>
+          <p class="ep-sub">
+            Ningún registro fue insertado. Corrige los errores y sube el archivo corregido.
+          </p>
+        </div>
+        <button class="btn-secondary btn-sm" (click)="resetUpload()">↑ Cargar de nuevo</button>
+      </div>
+
+      <!-- Resumen de estadísticas -->
+      <div class="ep-summary">
+        <div class="eps-pill eps-error">
+          <span class="eps-dot"></span>
+          {{ allErrors().length }} errores críticos
+        </div>
+        <div class="eps-pill eps-total">
+          📄 {{ uploadResult()?.totalRows | number }} filas procesadas
+        </div>
+        <div class="eps-pill eps-zero">
+          🔒 0 registros insertados
+        </div>
+      </div>
+
+      <!-- Filtro -->
+      <div class="ep-filter-row">
+        <input type="text" class="form-input ep-filter"
+               placeholder="🔍 Filtrar por campo, fila o mensaje..."
+               [value]="errorFilter()"
+               (input)="errorFilter.set($any($event.target).value); errorPage.set(0)" />
+        <span class="ep-count">
+          Mostrando {{ filteredErrors().length }} de {{ allErrors().length }}
+        </span>
+      </div>
+
+      <!-- Tabla de errores -->
+      <div class="ep-table-wrap">
+        <table class="data-table ep-table">
+          <thead>
+            <tr>
+              <th>Fila</th>
+              <th>Campo</th>
+              <th>Descripción del error</th>
+              <th>Severidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (err of paginatedErrors(); track $index) {
+              <tr [class]="errorRowClass(err)">
+                <td data-label="Fila">
+                  @if (err.rowNumber < 0) {
+                    <span class="badge badge-info">Global</span>
+                  } @else {
+                    <span class="row-num">#{{ err.rowNumber }}</span>
+                  }
+                </td>
+                <td data-label="Campo">
+                  @if (err.field) {
+                    <code class="field-chip">{{ err.field }}</code>
+                  } @else {
+                    <span class="text-faint">—</span>
+                  }
+                </td>
+                <td data-label="Error" class="err-msg">{{ err.message }}</td>
+                <td data-label="Severidad">
+                  <span class="badge"
+                        [class]="err.severity === 'WARNING' ? 'badge-info' : 'badge-danger'">
+                    {{ err.severity }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      @if (totalErrorPages() > 1) {
+        <div class="ep-pagination">
+          <button class="btn-secondary btn-sm"
+                  [disabled]="errorPage() === 0"
+                  (click)="prevErrorPage()">← Anterior</button>
+          <span class="ep-page-info">Página {{ errorPage() + 1 }} / {{ totalErrorPages() }}</span>
+          <button class="btn-secondary btn-sm"
+                  [disabled]="errorPage() >= totalErrorPages() - 1"
+                  (click)="nextErrorPage()">Siguiente →</button>
+        </div>
       }
+
     </div>
   }
 
-  <!-- ── Grid principal ─────────────────────────────────────────────────── -->
-  <div class="grid-2">
-
-    <!-- Estado de conexión API + columnas esperadas -->
-    <div class="card">
-      <h4 class="card-title mb-6">🗄️ Estado de Conexión CORE</h4>
-
-      <div class="status-pill success">
-        <div class="status-icon">✓</div>
-        <div>
-          <p class="status-name">API Gateway Activo</p>
-          <p class="status-meta">Base URL: http://localhost:8080</p>
-        </div>
-        <span class="badge badge-success">ONLINE</span>
-      </div>
-
-      <p class="label-header">Endpoints del Sistema Batch</p>
-      @for (ep of endpoints; track ep.path) {
-        <div class="endpoint-row">
-          <div class="ep-left">
-            <span class="ep-method">{{ ep.method }}</span>
-            <span class="ep-path">{{ ep.path }}</span>
-          </div>
-          <div class="ep-right">
-            <span class="ep-status">{{ ep.status }}</span>
-            <span class="ep-time">{{ ep.time }}</span>
-          </div>
-        </div>
-      }
-
-      <p class="label-header" style="margin-top:16px">
-        Estructura del archivo (15 columnas)
-      </p>
-      <p class="drop-hint">
-        Orden requerido en CSV (encabezado) o TXT (pipe |):
-      </p>
-      <ol class="columns-list">
-        @for (col of columnasEsperadas; track col; let i = $index) {
-          <li><strong>{{ i + 1 }}.</strong> {{ col }}</li>
-        }
-      </ol>
-    </div>
-
-    <!-- Historial de cargas -->
-    <div class="card">
-      <h4 class="card-title mb-6">⏱ Historial de Cargas Batch</h4>
-
-      @if (batches().length === 0) {
-        <p class="drop-hint">Aún no hay cargas registradas en esta sesión.</p>
-      }
-
-      @for (batch of batches(); track batch.name + batch.date) {
-        <div class="batch-row">
-          <div class="batch-top">
-            <span class="batch-name">{{ batch.name }}</span>
-            <span class="badge"
-              [class.badge-success]="batch.status === 'Exitoso'"
-              [class.badge-warning]="batch.status === 'Parcial'"
-              [class.badge-danger]="batch.status === 'Error'">
-              {{ batch.status }}
-            </span>
-          </div>
-          <div class="batch-bottom">
-            <div class="batch-meta">
-              <span>Registros: {{ batch.records | number }}</span>
-              @if (batch.errors > 0) {
-                <span class="error-count">⚠ Errores: {{ batch.errors }}</span>
-              }
-            </div>
-            <span class="batch-date">{{ batch.date }}</span>
-          </div>
-        </div>
-      }
-    </div>
-
-  </div>
 </div>
