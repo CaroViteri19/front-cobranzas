@@ -56,7 +56,7 @@ export const routes: Routes = [
       {
         path: 'integracion',
         canActivate: [roleGuard],
-        data: { roles: ['ADMINISTRADOR', 'SUPERVISOR', 'AUDITOR'] },
+        data: { roles: ['ADMINISTRATOR', 'SUPERVISOR', 'AUDITOR', 'ADMIN'] },
         loadComponent: () =>
           import('./features/integration/integration.component').then(m => m.IntegrationComponent)
       },

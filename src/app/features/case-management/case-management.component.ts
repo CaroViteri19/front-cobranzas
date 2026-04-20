@@ -80,7 +80,7 @@ export class CaseManagementComponent implements OnInit {
   readonly currentRole = computed<'Administrador' | 'Supervisor' | 'Agente' | 'Auditor'>(() => {
     const r = this.auth.currentRole();
     switch (r) {
-      case 'ADMINISTRADOR': return 'Administrador';
+      case 'ADMINISTRATOR': return 'Administrador';
       case 'SUPERVISOR':    return 'Supervisor';
       case 'AGENTE':        return 'Agente';
       case 'AUDITOR':       return 'Auditor';
