@@ -37,7 +37,14 @@
   box-shadow: var(--shadow-sm);
   border: 1px solid rgba(0,0,0,0.04);
   flex-wrap: wrap;
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  overflow-x: auto;   /* 🔥 CLAVE */
+  flex-wrap: nowrap;  /* 🔥 evita que bajen */
+  scroll-behavior: smooth;
 }
+
 
 .tab-btn {
   display: flex;
@@ -53,6 +60,16 @@
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
+ 
+  flex: 1 1 140px;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+}
+.tab-btn {
+  justify-content: center;
+  text-align: center;
+  flex: 0 0 auto; /* 🔥 evita que se compriman */
   white-space: nowrap;
 }
 
