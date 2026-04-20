@@ -1,6 +1,23 @@
 .module-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 1.5rem; flex-wrap: wrap; }
 .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
+.agents-stack { display: flex; }
+.agent-chip {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--brand-secondary);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  margin-left: -8px;
+}
+.agent-chip:first-child { margin-left: 0; }
+.agent-chip.more { background: #e2e8f0; color: #64748b; }
+
 .filter-select { max-width: 180px; }
 
 .mb-6 { margin-bottom: 1.5rem; }
@@ -8,6 +25,7 @@
 .mb-2 { margin-bottom: 0.5rem; }
 .card-title { font-size: 1rem; font-weight: 700; color: var(--brand-primary); }
 
+/* Summary Cards */
 .stat-mini-card {
   background: white;
   border-radius: var(--radius-xl);
@@ -21,11 +39,14 @@
 .smc-value { font-size: 1.6rem; font-weight: 800; color: var(--brand-primary); }
 .smc-dot   { width: 8px; height: 8px; border-radius: 50%; }
 
+/* Layout */
 .cases-layout {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
 }
+
+.cases-table-card {}
 
 .card-header-row {
   display: flex;
@@ -60,6 +81,7 @@ tr.selected td { background: rgba(16,152,155,0.05); }
   letter-spacing: 0.03em;
 }
 
+/* Detail Panel */
 .detail-panel { animation: fadeSlideIn 0.2s ease; }
 
 .detail-header {
@@ -100,6 +122,7 @@ tr.selected td { background: rgba(16,152,155,0.05); }
 .ds-label { font-size: 0.65rem; text-transform: uppercase; color: #94a3b8; font-weight: 600; }
 .ds-value { font-size: 1rem; font-weight: 800; color: var(--brand-primary); }
 
+/* Notes */
 .notes-list { display: flex; flex-direction: column; gap: 8px; }
 
 .note-item {
@@ -120,6 +143,9 @@ tr.selected td { background: rgba(16,152,155,0.05); }
 .note-date   { font-size: 0.65rem; color: #94a3b8; }
 .note-text   { font-size: 0.8rem; color: #475569; line-height: 1.4; }
 
+/* ═══════════════════════════════════════════
+   COLAPSABLE — patrón compartido
+═══════════════════════════════════════════ */
 .collapse-trigger {
   display: flex;
   align-items: center;
@@ -165,12 +191,19 @@ tr.selected td { background: rgba(16,152,155,0.05); }
 }
 .collapse-btn:hover { background: var(--brand-bg); color: var(--brand-primary); }
 
+/* Panel de detalle: header colapsable solo visible en mobile */
 .detail-collapse-trigger { display: none; }
 
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+
+/* ── Desktop wide: tabla + panel lado a lado ── */
 @media (min-width: 1280px) {
   .cases-layout { grid-template-columns: 1fr 360px; }
 }
 
+/* ── Tablet (≤ 1024px) ── */
 @media (max-width: 1024px) {
   .module-header { flex-direction: column; gap: 10px; }
   .header-actions { width: 100%; }
@@ -178,7 +211,9 @@ tr.selected td { background: rgba(16,152,155,0.05); }
   .smc-value { font-size: 1.35rem; }
 }
 
+/* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
+  /* TABLA → CARD VIEW */
   .table-wrapper { overflow-x: visible; }
 
   .table-wrapper .data-table          { display: block; min-width: 0; }
@@ -206,6 +241,7 @@ tr.selected td { background: rgba(16,152,155,0.05); }
     border: none;
     font-size: 0.8rem;
   }
+  /* Primera celda (Asociado) ocupa toda la fila */
   .table-wrapper .data-table td:first-child {
     grid-column: 1 / -1;
     border-bottom: 1px solid #e2e8f0;
@@ -215,6 +251,7 @@ tr.selected td { background: rgba(16,152,155,0.05); }
     align-items: center;
     gap: 8px;
   }
+  /* Última celda (Asignación) ocupa toda la fila */
   .table-wrapper .data-table td:last-child {
     grid-column: 1 / -1;
     border-top: 1px solid #f1f5f9;
@@ -234,20 +271,26 @@ tr.selected td { background: rgba(16,152,155,0.05); }
   .table-wrapper .data-table td:first-child::before,
   .table-wrapper .data-table td:last-child::before { display: none; }
 
+  /* Score cell en card */
   .score-cell .progress-bar { width: 36px; }
 
+  /* Stats mini */
   .smc-value      { font-size: 1.25rem; }
   .stat-mini-card { padding: 1rem; }
 
+  /* Detail stats: wrap en 2 cols */
   .detail-stats { flex-wrap: wrap; gap: 0.5rem; }
   .ds           { min-width: calc(50% - 0.5rem); }
 
+  /* Panel de detalle: mostrar trigger colapsable */
   .detail-collapse-trigger { display: flex; }
 
   .card-header-row { flex-wrap: wrap; gap: 6px; }
 }
 
+/* ── Small mobile (≤ 480px) ── */
 @media (max-width: 480px) {
+  /* Cards de casos en columna única */
   .table-wrapper .data-table tr {
     grid-template-columns: 1fr;
   }
@@ -261,9 +304,11 @@ tr.selected td { background: rgba(16,152,155,0.05); }
   .header-actions { flex-direction: column; }
 }
 
+/* ─── Role switcher ───────────────────────── */
 .role-switcher { display: flex; align-items: center; gap: 6px; }
 .role-label-sm { font-size: 0.75rem; color: #64748b; white-space: nowrap; }
 
+/* ─── Assignment column ───────────────────── */
 .assign-cell {
   display: flex;
   flex-direction: column;
@@ -279,6 +324,7 @@ tr.selected td { background: rgba(16,152,155,0.05); }
   font-style: italic;
 }
 
+/* Desborde IA badge */
 .desborde-badge {
   display: inline-flex;
   align-items: center;
@@ -311,6 +357,7 @@ tr.selected td { background: rgba(16,152,155,0.05); }
 }
 .source-badge.mt-1 { margin-top: 4px; }
 
+/* ─── Reassignment panel ──────────────────── */
 .reassign-section {
   border: 1px solid rgba(0,0,0,0.07);
   border-radius: var(--radius-lg);
@@ -341,6 +388,7 @@ tr.selected td { background: rgba(16,152,155,0.05); }
 .agent-name-text { font-weight: 600; color: #1e293b; margin: 4px 0 0; }
 .agent-ia-note { font-size: 0.72rem; color: #f97316; margin: 2px 0 0; }
 
+/* ─── Activity log ────────────────────────── */
 .activity-section { margin-top: 1rem; }
 .activity-entry {
   display: flex;

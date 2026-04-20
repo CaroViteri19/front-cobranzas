@@ -25,8 +25,7 @@ export class MainLayoutComponent {
 
   readonly navItems: NavItem[] = [
     { id: 'dashboard',     label: 'Dashboard General', icon: '⊞',  route: '/dashboard' },
-    { id: 'integracion',   label: 'M1. Integracion',   icon: '🔗', route: '/integracion' },
-    /*
+    /*{ id: 'integracion',   label: 'M1. Integración',   icon: '🔗', route: '/integracion' },
     { id: 'analitica',     label: 'M2. Analítica',     icon: '📊', route: '/analitica' },
     { id: 'politicas',     label: 'M3. Políticas',     icon: '⚙️', route: '/politicas' },
     { id: 'orquestacion',  label: 'M4. Orquestación',  icon: '💬', route: '/orquestacion' },

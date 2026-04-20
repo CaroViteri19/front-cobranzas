@@ -5,24 +5,17 @@
       <h2 class="section-title">M1. Integración y Adquisición de Datos</h2>
       <p class="section-subtitle">Gestión de ingesta vía API y Archivos Batch (TXT/CSV).</p>
     </div>
-    <button class="btn-primary" (click)="openFilePicker(batchFileInput)" [disabled]="uploading()">
+    <button class="btn-primary" (click)="simulateUpload()" [disabled]="uploading()">
       <span>📤</span>
       {{ uploading() ? 'Procesando...' : 'Cargar Archivo Batch' }}
     </button>
-    <input #batchFileInput hidden type="file" accept=".csv,.txt" (change)="onFileSelected(batchFileInput)" />
   </div>
-
-  @if (uploadError()) {
-    <div class="card" style="margin-bottom: 12px;">
-      <span class="error-count">{{ uploadError() }}</span>
-    </div>
-  }
 
   <!-- Progress Bar (visible during upload) -->
   @if (uploading()) {
     <div class="card upload-progress">
       <div class="progress-header">
-        <span class="progress-label">Procesando Lote: {{ uploadingFileName() }}</span>
+        <span class="progress-label">Procesando Lote: CARTERA_20240319.csv</span>
         <span class="progress-pct">{{ progress() }}%</span>
       </div>
       <div class="progress-bar" style="height: 10px;">
@@ -43,19 +36,17 @@
     <div class="card">
       <h4 class="card-title mb-6">🗄️ Estado de Conexión CORE</h4>
 
-      <div class="status-pill" [class.success]="coreStatus() === 'ONLINE'" [class.danger]="coreStatus() === 'OFFLINE'">
+      <div class="status-pill success">
         <div class="status-icon">✓</div>
         <div>
-          <p class="status-name">Servicio de Carga Batch</p>
-          <p class="status-meta">{{ coreMeta() }}</p>
+          <p class="status-name">API Gateway Activo</p>
+          <p class="status-meta">Latencia: 45ms | Uptime: 99.9%</p>
         </div>
-        <span class="badge" [class.badge-success]="coreStatus() === 'ONLINE'" [class.badge-danger]="coreStatus() === 'OFFLINE'">
-          {{ coreStatus() }}
-        </span>
+        <span class="badge badge-success">ONLINE</span>
       </div>
 
       <p class="label-header">Endpoints Recientes</p>
-      @for (ep of endpoints(); track ep.id) {
+      @for (ep of endpoints; track ep.path) {
         <div class="endpoint-row">
           <div class="ep-left">
             <span class="ep-method">{{ ep.method }}</span>
@@ -67,17 +58,13 @@
           </div>
         </div>
       }
-
-      @if (endpoints().length === 0) {
-        <p class="section-subtitle">Aun no hay llamadas de integracion registradas.</p>
-      }
     </div>
 
     <!-- Batch History -->
     <div class="card">
       <h4 class="card-title mb-6">⏱ Historial de Cargas Batch</h4>
 
-      @for (batch of batches(); track batch.id) {
+      @for (batch of batches; track batch.name) {
         <div class="batch-row">
           <div class="batch-top">
             <span class="batch-name">{{ batch.name }}</span>
@@ -98,10 +85,6 @@
             <button class="btn-link">Ver Errores →</button>
           }
         </div>
-      }
-
-      @if (batches().length === 0) {
-        <p class="section-subtitle">Aun no hay cargas batch ejecutadas.</p>
       }
     </div>
 

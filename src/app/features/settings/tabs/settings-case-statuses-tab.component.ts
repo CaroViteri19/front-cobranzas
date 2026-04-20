@@ -9,7 +9,6 @@ import { StoreService } from '../../../core/services/store.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './settings-case-statuses-tab.component.html',
-  styleUrl: './settings-case-statuses-tab.component.css',
 })
 export class SettingsCaseStatusesTabComponent {
   private readonly store = inject(StoreService);
