@@ -3,6 +3,8 @@ import {
   Associate, Case, Policy, Campaign,
   CaseStatus, AssignmentRule, CaseNote
 } from '../models';
+import { ClientResponse } from '../models/client.model';
+import { ObligationResponse } from '../models/obligation.model';
 
 @Injectable({ providedIn: 'root' })
 export class StoreService {
@@ -105,53 +107,9 @@ export class StoreService {
       },
     ];
 
-    const associates: Associate[] = [
-      { id: '1', name: 'Juan Pérez',    document: '10203040', email: 'juan@example.com',   phone: '3001234567', segment: 'Preventiva',     score: 850, propensity: 'Alta',  risk: 'Bajo',    balance: 1_500_000, daysOverdue: -5 },
-      { id: '2', name: 'Maria García',  document: '50607080', email: 'maria@example.com',  phone: '3109876543', segment: 'Administrativa', score: 420, propensity: 'Media', risk: 'Alto',    balance: 4_250_000, daysOverdue: 15 },
-      { id: '3', name: 'Carlos Ruiz',   document: '90102030', email: 'carlos@example.com', phone: '3201112233', segment: 'Temprana',       score: 680, propensity: 'Alta',  risk: 'Medio',   balance: 6_800_000, daysOverdue: 45 },
-      { id: '4', name: 'Ana López',     document: '40506070', email: 'ana@example.com',    phone: '3154445566', segment: 'Prejurídica',    score: 150, propensity: 'Baja',  risk: 'Crítico', balance: 12_500_000, daysOverdue: 95 },
-      { id: '5', name: 'Pedro Vargas',  document: '20304050', email: 'pedro@example.com',  phone: '3107778899', segment: 'Temprana',       score: 540, propensity: 'Media', risk: 'Alto',    balance: 3_200_000, daysOverdue: 38 },
-      { id: '6', name: 'Lucía Méndez',  document: '60708090', email: 'lucia@example.com',  phone: '3165554433', segment: 'Administrativa', score: 720, propensity: 'Alta',  risk: 'Bajo',    balance: 2_100_000, daysOverdue: 8 },
-    ];
-
-    const cases: Case[] = [
-      {
-        id: 'CS-1', associateId: '1',
-        status: 'ST-001', priority: 'Baja',
-        assignedTo: undefined, assignmentSource: undefined, desbordeIA: false,
-        notes: [], agreements: []
-      },
-      {
-        id: 'CS-2', associateId: '2',
-        status: 'ST-002', priority: 'Alta',
-        assignedTo: 'Agente 02', assignmentSource: 'Manual', desbordeIA: false,
-        notes: [], agreements: []
-      },
-      {
-        id: 'CS-3', associateId: '3',
-        status: 'ST-002', priority: 'Media',
-        assignedTo: 'Agente 01', assignmentSource: 'IA', desbordeIA: false,
-        notes: [], agreements: []
-      },
-      {
-        id: 'CS-4', associateId: '4',
-        status: 'ST-005', priority: 'Crítica',
-        assignedTo: 'Agente 03', assignmentSource: 'IA', desbordeIA: true,
-        notes: [], agreements: []
-      },
-      {
-        id: 'CS-5', associateId: '5',
-        status: 'ST-003', priority: 'Alta',
-        assignedTo: 'Agente 01', assignmentSource: 'IA', desbordeIA: true,
-        notes: [], agreements: []
-      },
-      {
-        id: 'CS-6', associateId: '6',
-        status: 'ST-004', priority: 'Baja',
-        assignedTo: 'Agente 02', assignmentSource: 'Manual', desbordeIA: false,
-        notes: [], agreements: []
-      },
-    ];
+    // Asociados y casos: vacíos — se cargan desde backend (ClientController /list + ObligationController).
+    const associates: Associate[] = [];
+    const cases: Case[] = [];
 
     const policies: Policy[] = [
       { id: 'SEG-001', name: 'Preventiva',     criteria: 'Mora < 0 días',      intensity: 'Baja',    color: '#10b981' },
@@ -279,5 +237,117 @@ export class StoreService {
 
   getAssociate(id: string): Associate | undefined {
     return this.associates().find(a => a.id === id);
+  }
+
+  // ── Integración con backend ───────────────────────────────────────────
+  /**
+   * Prefijo usado para el id interno de un asociado "inyectado" desde el
+   * backend. Así convivimos con los ids mock ("1", "2"...) sin colisionar.
+   */
+  private static readonly BACKEND_ASSOC_PREFIX = 'BE-';
+  private static readonly BACKEND_CASE_PREFIX  = 'CS-BE-';
+
+  /**
+   * Inserta o actualiza un asociado a partir de un cliente del backend y
+   * sus obligaciones. Si no existe un caso para él, crea uno automáticamente
+   * en estado "Nuevo" y prioridad calculada por días de mora.
+   *
+   * @param client       Datos del cliente (ClientResponse del backend).
+   * @param obligations  Obligaciones del cliente (puede ser [] si aún no cargadas).
+   * @returns Par {asociado, caso} finalmente almacenados en la store.
+   */
+  upsertAssociateFromBackend(
+    client: ClientResponse,
+    obligations: ObligationResponse[] = [],
+  ): { associate: Associate; caseItem: Case } {
+
+    const associateId = `${StoreService.BACKEND_ASSOC_PREFIX}${client.id}`;
+
+    // Agrega saldos y elige la obligación más vencida como "referencia".
+    const totalBalance   = obligations.reduce((sum, o) => sum + Number(o.totalBalance), 0);
+    const overdueBalance = obligations.reduce((sum, o) => sum + Number(o.overdueBalance), 0);
+    const worstDelinquency = obligations.reduce(
+      (max, o) => Math.max(max, o.delinquencyDays), 0,
+    );
+
+    // Heurísticas simples para los campos que el backend no expone todavía.
+    const segment = this.segmentFromDays(worstDelinquency);
+    const risk    = this.riskFromBalance(overdueBalance, worstDelinquency);
+    const score   = this.scoreFromSignals(worstDelinquency, overdueBalance);
+
+    const associate: Associate = {
+      id: associateId,
+      name:         client.fullName,
+      document:     `${client.tipoDocumento} ${client.numeroDocumento}`,
+      email:        client.email,
+      phone:        client.telefono,
+      segment,
+      score,
+      propensity:   score >= 700 ? 'Alta' : score >= 450 ? 'Media' : 'Baja',
+      risk,
+      balance:      totalBalance,
+      daysOverdue:  worstDelinquency,
+    };
+
+    // Upsert en la lista de asociados.
+    this.associates.update(list => {
+      const idx = list.findIndex(a => a.id === associateId);
+      return idx >= 0
+        ? list.map((a, i) => i === idx ? associate : a)
+        : [...list, associate];
+    });
+
+    // Crea el caso si aún no existe para este asociado.
+    const caseId = `${StoreService.BACKEND_CASE_PREFIX}${client.id}`;
+    const existing = this.cases().find(c => c.id === caseId);
+    const caseItem: Case = existing ?? {
+      id: caseId,
+      associateId,
+      status: worstDelinquency > 0 ? 'ST-002' : 'ST-001',
+      priority: this.priorityFromDays(worstDelinquency),
+      assignedTo: undefined,
+      assignmentSource: undefined,
+      desbordeIA: false,
+      notes: [],
+      agreements: [],
+    };
+
+    this.cases.update(list =>
+      existing
+        ? list.map(c => c.id === caseId ? { ...c, /* refrescamos nada del caso */ } : c)
+        : [...list, caseItem]
+    );
+
+    return { associate, caseItem };
+  }
+
+  // ── Helpers de derivación ─────────────────────────────────────────────
+  private segmentFromDays(days: number): string {
+    if (days <= 0)  return 'Preventiva';
+    if (days <= 30) return 'Administrativa';
+    if (days <= 60) return 'Temprana';
+    return 'Prejurídica';
+  }
+
+  private riskFromBalance(overdue: number, days: number): Associate['risk'] {
+    if (days >= 90 || overdue >= 10_000_000) return 'Crítico';
+    if (days >= 45 || overdue >=  5_000_000) return 'Alto';
+    if (days >  0)                           return 'Medio';
+    return 'Bajo';
+  }
+
+  private scoreFromSignals(days: number, overdue: number): number {
+    // Score estimado (0-1000). Ajustable cuando el backend exponga un score real.
+    let score = 900;
+    score -= Math.min(days, 120) * 5;
+    score -= Math.min(overdue / 100_000, 200);
+    return Math.max(50, Math.round(score));
+  }
+
+  private priorityFromDays(days: number): Case['priority'] {
+    if (days >= 90) return 'Crítica';
+    if (days >= 45) return 'Alta';
+    if (days >  0)  return 'Media';
+    return 'Baja';
   }
 }

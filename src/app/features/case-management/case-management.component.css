@@ -414,3 +414,233 @@ tr.selected td { background: rgba(16,152,155,0.05); }
 .ae-action { font-size: 0.78rem; color: #1e293b; margin: 0 0 2px; }
 .ae-action em { color: var(--brand-accent); font-style: normal; }
 .ae-user-name { font-size: 0.72rem; color: #94a3b8; margin: 0; }
+
+.activity-empty {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 0.75rem 0;
+  margin: 0;
+}
+
+/* ── Loader cliente/obligaciones desde backend ──────────────────────── */
+.loader-card {
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.loader-card .collapse-trigger {
+  padding: 0 0 10px;
+  margin-bottom: 0.5rem;
+}
+
+.loader-card .card-title {
+  font-size: 0.9rem;
+}
+
+.loader-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+
+.loader-tabs {
+  display: inline-flex;
+  gap: 2px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 7px;
+  margin-bottom: 0.75rem;
+}
+
+.loader-tabs button {
+  background: transparent;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.72rem;
+  font-family: inherit;
+  line-height: 1.4;
+  transition: background 0.15s, color 0.15s;
+}
+
+.loader-tabs button:hover { color: var(--brand-primary); }
+
+.loader-tabs button.active {
+  background: #fff;
+  color: var(--brand-primary);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.loader-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Grupo tipo-doc + número: se ve como un solo campo segmentado */
+.loader-doc-group {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.loader-doc-group:focus-within {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(16,152,155,0.12);
+}
+
+.loader-doc-group .form-select,
+.loader-doc-group .form-input {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.loader-doc-group .form-select {
+  border-right: 1px solid #e2e8f0 !important;
+  background-color: #f8fafc;
+}
+
+/* Override explícito a los .form-input/.form-select globales, que son gigantes */
+.loader-form .form-select,
+.loader-form .form-input {
+  width: auto;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  min-height: 32px;
+  border-radius: 6px;
+  border-width: 1px;
+}
+
+.loader-form .form-select {
+  flex: 0 0 auto;
+  width: 80px;
+  padding-right: 1.5rem;
+  background-position: right 0.5rem center;
+  background-size: 10px;
+}
+
+.loader-form .form-input {
+  flex: 0 1 220px;
+  min-width: 140px;
+  max-width: 260px;
+}
+
+.loader-form .btn-accent {
+  padding: 0.35rem 0.9rem;
+  min-height: 32px;
+  font-size: 0.78rem;
+  border-radius: 6px;
+}
+
+.loader-msg {
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 7px;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.loader-err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.loader-ok  { background: #ecfdf5; color: #065f46; border: 1px solid #bbf7d0; }
+
+/* ── Paginación ─────────────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 0.75rem;
+}
+
+.pagination-info {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pg-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pg-btn:hover:not(:disabled) {
+  background: var(--brand-bg);
+  color: var(--brand-primary);
+  border-color: var(--brand-accent);
+}
+
+.pg-btn.active {
+  background: var(--brand-accent);
+  color: white;
+  border-color: var(--brand-accent);
+}
+
+.pg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-status {
+  font-size: 0.82rem;
+  color: #64748b;
+  padding: 0.75rem 0;
+  text-align: center;
+}
+
+.page-status.empty {
+  color: #94a3b8;
+  font-style: italic;
+  padding: 1.5rem 1rem;
+  background: #f8fafc;
+  border-radius: var(--radius-md);
+  border: 1px dashed #e2e8f0;
+  line-height: 1.5;
+}
+
+/* Mobile: loader apilado, fields al 100% (pero sin el 44px que impone el global) */
+@media (max-width: 600px) {
+  .loader-card { padding: 0.9rem 1rem; }
+  .loader-tabs { width: 100%; }
+  .loader-tabs button { flex: 1; }
+
+  .loader-form { flex-direction: column; align-items: stretch; }
+  .loader-form .form-select,
+  .loader-form .form-input,
+  .loader-form .btn-accent {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    flex: 1 1 auto;
+    min-height: 36px;
+  }
+}
