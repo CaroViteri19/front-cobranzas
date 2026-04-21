@@ -1,125 +1,35 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpEvent, HttpEventType, HttpRequest } from '@angular/common/http';
+import { HttpClient, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-// ── DTOs (reflejan el contrato del backend) ───────────────────────────────────
-
-/** Error de validación en una fila/campo específico del CSV. */
-export interface RowError {
-  rowNumber: number;   // -1 = error global del archivo
-  field:     string | null;
-  message:   string;
-  severity:  'ERROR' | 'WARNING';
-}
-
-/** Respuesta unificada del proceso de carga masiva. */
-export interface CargaMasivaResult {
-  success:        boolean;
-  totalRows:      number;
-  totalInserted:  number;
-  totalErrors:    number;
-  fileName:       string;
-  processedAt:    string;
-  errors:         RowError[];
-}
-
-/** Estado del progreso de carga. */
-export interface UploadProgress {
-  phase:      'uploading' | 'processing' | 'done' | 'error';
-  percent:    number;   // 0–100 (upload HTTP progress)
-  result?:    CargaMasivaResult;
-  error?:     string;
-}
-
-// ── Servicio ──────────────────────────────────────────────────────────────────
+import { API_PATHS } from '../config/api.config';
+import { CargaMasivaResultResponse } from '../models/carga-masiva.model';
 
 /**
- * Servicio Angular para la carga masiva de asociados vía CSV.
+ * Cliente HTTP para `/api/v1/carga-masiva`.
  *
- * Expone un Observable de {@link UploadProgress} que emite actualizaciones
- * durante la carga HTTP y al finalizar el procesamiento del servidor.
- *
- * Uso:
- * ```typescript
- * this.cargaMasivaService.upload(file).subscribe(progress => {
- *   this.uploadProgress.set(progress);
- * });
- * ```
+ * <p>Expone el endpoint {@code POST /upload} con {@code multipart/form-data}.
+ * El interceptor global inyecta el JWT automáticamente.
  */
 @Injectable({ providedIn: 'root' })
 export class CargaMasivaService {
-  private http   = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/v1/carga-masiva';
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = API_PATHS.cargaMasiva;
 
   /**
-   * Sube el archivo CSV al backend y emite progreso en tiempo real.
+   * Sube un archivo CSV / TXT al backend reportando progreso de upload.
    *
-   * @param file Archivo CSV seleccionado por el usuario
-   * @returns Observable que emite actualizaciones de {@link UploadProgress}
+   * <p>Usar con {@code observe: 'events'} permite al componente pintar
+   * una barra de progreso. La respuesta final llega en el evento
+   * {@code HttpEventType.Response}.
    */
-  upload(file: File): Observable<UploadProgress> {
-    const formData = new FormData();
-    formData.append('file', file, file.name);
+  upload(file: File): Observable<HttpEvent<CargaMasivaResultResponse>> {
+    const form = new FormData();
+    form.append('file', file);
 
-    // 'observe' pertenece a http.get()/post(), no al constructor HttpRequest.
-    // http.request(req) ya devuelve Observable<HttpEvent<T>> cuando reportProgress=true.
-    const req = new HttpRequest('POST', `${this.apiUrl}/upload`, formData, {
+    return this.http.post<CargaMasivaResultResponse>(`${this.baseUrl}/upload`, form, {
       reportProgress: true,
-    });
-
-    return new Observable<UploadProgress>(observer => {
-      // Estado inicial
-      observer.next({ phase: 'uploading', percent: 0 });
-
-      this.http.request<CargaMasivaResult>(req).subscribe({
-        next: (event: HttpEvent<CargaMasivaResult>) => {
-          if (event.type === HttpEventType.UploadProgress) {
-            // Progreso de carga al servidor (0–95%)
-            const percent = event.total
-              ? Math.round((event.loaded / event.total) * 95)
-              : 50;
-            observer.next({ phase: 'uploading', percent });
-
-          } else if (event.type === HttpEventType.Sent) {
-            // Petición enviada, servidor procesando
-            observer.next({ phase: 'processing', percent: 96 });
-
-          } else if (event.type === HttpEventType.Response) {
-            // Respuesta del servidor
-            const result = event.body!;
-            observer.next({
-              phase:   result.success ? 'done' : 'error',
-              percent: 100,
-              result,
-            });
-            observer.complete();
-          }
-        },
-        error: (err) => {
-          // Manejar respuesta de error HTTP (422 con errores de validación, etc.)
-          const errorBody = err.error as CargaMasivaResult | undefined;
-          if (errorBody && Array.isArray(errorBody.errors)) {
-            observer.next({
-              phase:   'error',
-              percent: 100,
-              result:  errorBody,
-            });
-          } else {
-            observer.next({
-              phase:   'error',
-              percent: 100,
-              error:   err.status === 413
-                ? 'El archivo excede el tamaño máximo permitido (50MB).'
-                : err.status === 401
-                ? 'Sesión expirada. Vuelve a iniciar sesión.'
-                : err.status === 403
-                ? 'No tienes permisos para realizar esta operación.'
-                : `Error del servidor (${err.status}): ${err.message}`,
-            });
-          }
-          observer.complete();
-        },
-      });
+      observe: 'events',
     });
   }
 }
