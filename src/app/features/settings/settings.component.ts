@@ -315,7 +315,7 @@ export class SettingsComponent implements OnInit {
 
  /** Roles estáticos usados cuando el usuario no tiene permisos para consultarlos. */
   private readonly fallbackRoles: RoleOption[] = [
-    { id: 1, name: 'ADMINISTRADOR', description: 'Acceso total al sistema' },
+    { id: 1, name: 'ADMINISTRATOR', description: 'Acceso total al sistema' },
     { id: 2, name: 'SUPERVISOR',    description: 'Gestión de equipos y reportes' },
     { id: 3, name: 'AGENTE',        description: 'Gestión de casos asignados' },
     { id: 4, name: 'AUDITOR',       description: 'Acceso de solo lectura' },
@@ -324,7 +324,7 @@ export class SettingsComponent implements OnInit {
  ngOnInit(): void {
   // Solo ADMINISTRADOR puede consultar el catálogo de roles en el backend.
   // Los demás roles usan la lista estática para evitar un 500 innecesario.
-  if (this.auth.hasAnyRole('ADMINISTRADOR')) {
+  if (this.auth.hasAnyRole('ADMINISTRATOR')) {
     this.userService.getRoles()
       .then(roles => this.availableRoles.set(roles))
       .catch(() => this.availableRoles.set(this.fallbackRoles));

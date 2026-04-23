@@ -127,4 +127,183 @@
     </div>
   </div>
 
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- INTEGRACIÓN REAL: /api/v1/payments (PaymentController)         -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <div class="backend-header">
+    <h3 class="section-title">🔗 Operaciones reales de pago (backend)</h3>
+    <p class="section-subtitle">
+      Conectado a <code>/api/v1/payments</code>. Listar por obligación, buscar por
+      referencia, generar link y confirmar/rechazar pagos.
+    </p>
+  </div>
+
+  <div class="backend-grid">
+
+    <!-- Panel 1: Generar link de pago -->
+    <div class="card">
+      <h4 class="card-title mb-4">🔗 Generar link de pago</h4>
+
+      <div class="form-group">
+        <label class="form-label">ID de obligación</label>
+        <input type="number" class="form-input" min="1"
+               [ngModel]="linkObligationId()"
+               (ngModelChange)="linkObligationId.set($event)"
+               placeholder="Ej: 501" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Método de pago</label>
+        <select class="form-select"
+                [ngModel]="linkMethod()"
+                (ngModelChange)="linkMethod.set($event)">
+          @for (m of paymentMethods; track m) {
+            <option [ngValue]="m">{{ m }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-accent" (click)="generateLink()" [disabled]="linkLoading()">
+          @if (linkLoading()) { Generando… } @else { 🚀 Generar link }
+        </button>
+      </div>
+
+      @if (linkError()) {
+        <p class="error-msg">⚠ {{ linkError() }}</p>
+      }
+      @if (lastGenerated(); as g) {
+        <div class="result-box">
+          <strong>✓ Payment #{{ g.paymentId }}</strong>
+          <div class="result-url">
+            <a [href]="g.paymentUrl" target="_blank" rel="noopener noreferrer">{{ g.paymentUrl }}</a>
+          </div>
+          @if (g.expirationDate) {
+            <div>Expira: {{ g.expirationDate }}</div>
+          }
+          @if (g.gatewayReference) {
+            <div>Ref. pasarela: <code>{{ g.gatewayReference }}</code></div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Panel 2: Consulta pagos -->
+    <div class="card">
+      <h4 class="card-title mb-4">🔍 Consultar pagos</h4>
+
+      <div class="form-group">
+        <label class="form-label">Por obligación</label>
+        <div class="inline-form">
+          <input type="number" class="form-input" min="1"
+                 [ngModel]="obligationQuery()"
+                 (ngModelChange)="obligationQuery.set($event)"
+                 placeholder="ID de obligación" />
+          <button class="btn-primary btn-sm" (click)="loadPaymentsByObligation()" [disabled]="listLoading()">
+            Buscar
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Por referencia externa</label>
+        <div class="inline-form">
+          <input type="text" class="form-input"
+                 [ngModel]="referenceQuery()"
+                 (ngModelChange)="referenceQuery.set($event)"
+                 placeholder="REF-2026-..." />
+          <button class="btn-secondary btn-sm" (click)="findByReference()" [disabled]="listLoading()">
+            Buscar
+          </button>
+        </div>
+      </div>
+
+      @if (listError()) {
+        <p class="error-msg">⚠ {{ listError() }}</p>
+      }
+      @if (paymentsList().length > 0) {
+        <div class="kpi-row compact">
+          <div class="kpi">
+            <span class="kpi-lbl">Pagos listados</span>
+            <span class="kpi-val">{{ paymentsList().length }}</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-lbl">Suma</span>
+            <span class="kpi-val">${{ totalListedAmount().toLocaleString('es-CO') }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+  </div>
+
+  <!-- Tabla de pagos listados -->
+  <div class="card">
+    <h4 class="card-title mb-4">📋 Pagos encontrados</h4>
+
+    @if (actionError()) {
+      <p class="error-msg">⚠ {{ actionError() }}</p>
+    }
+    @if (actionInfo()) {
+      <p class="success-msg">✅ {{ actionInfo() }}</p>
+    }
+
+    @if (!paymentsList().length && !listLoading()) {
+      <p class="empty-state">Busca por obligación o referencia para ver pagos.</p>
+    }
+
+    @if (paymentsList().length > 0) {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Obligación</th>
+              <th>Monto</th>
+              <th>Método</th>
+              <th>Referencia</th>
+              <th>Estado</th>
+              <th>Confirmado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of paymentsList(); track p.id) {
+              <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.obligationId }}</td>
+                <td>${{ (+p.amount).toLocaleString('es-CO') }}</td>
+                <td>{{ p.method }}</td>
+                <td><code>{{ p.externalReference }}</code></td>
+                <td>
+                  <span class="badge"
+                        [class.badge-success]="p.status === 'CONFIRMED'"
+                        [class.badge-warning]="p.status === 'PENDING'"
+                        [class.badge-danger]="p.status === 'REJECTED' || p.status === 'EXPIRED'">
+                    {{ p.status }}
+                  </span>
+                </td>
+                <td>{{ p.confirmedAt ?? '—' }}</td>
+                <td class="backend-actions">
+                  @if (p.status === 'PENDING') {
+                    <button class="btn-accent btn-sm"
+                            title="Confirmar pago por referencia"
+                            (click)="confirmByReference(p.externalReference)"
+                            [disabled]="actionLoading()">✓ Confirmar</button>
+                    <button class="btn-secondary btn-sm"
+                            title="Rechazar pago"
+                            (click)="rejectPayment(p.id)"
+                            [disabled]="actionLoading()">✕ Rechazar</button>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
 </div>

@@ -384,4 +384,155 @@
 
   </div>
 
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- INTEGRACIÓN REAL: /api/v1/cases (backend CaseController)        -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+
+  <!-- Panel: Crear caso real en el backend -->
+  <div class="card backend-card create-case-card">
+    <h4 class="card-title">➕ Crear caso en el backend</h4>
+    <p class="loader-hint">
+      Dispara <code>POST /api/v1/cases</code>. Escoge una obligación ya cargada
+      (con el loader de arriba o la paginación) o ingresa su ID a mano.
+    </p>
+
+    <div class="create-case-form">
+      <div class="cc-field">
+        <label class="form-label">Obligación</label>
+        @if (loadedObligations().length > 0) {
+          <select class="form-select"
+                  [ngModel]="createObligationId()"
+                  (ngModelChange)="createObligationId.set($event)">
+            <option [ngValue]="null">— Selecciona obligación —</option>
+            @for (o of loadedObligations(); track o.id) {
+              <option [ngValue]="o.id">
+                #{{ o.id }} · {{ o.obligationNumber }} · {{ o.delinquencyDays }}d mora
+              </option>
+            }
+          </select>
+        } @else {
+          <input type="number" min="1" class="form-input"
+                 placeholder="ID de obligación"
+                 [ngModel]="createObligationId()"
+                 (ngModelChange)="createObligationId.set($event)" />
+        }
+      </div>
+
+      <div class="cc-field">
+        <label class="form-label">Prioridad</label>
+        <select class="form-select"
+                [ngModel]="createPriority()"
+                (ngModelChange)="createPriority.set($event)">
+          @for (p of casePriorities; track p) {
+            <option [ngValue]="p">{{ p }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="cc-actions">
+        <button class="btn-accent"
+                (click)="createBackendCase()"
+                [disabled]="caseCreateLoading() || !createObligationId()">
+          {{ caseCreateLoading() ? 'Creando…' : '➕ Crear caso' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card backend-card">
+    <div class="collapse-trigger" (click)="null">
+      <div>
+        <h4 class="card-title">🏦 Casos reales desde el backend</h4>
+        <p class="loader-hint" style="margin:4px 0 0">
+          Conectado a <code>/api/v1/cases/pending</code>. Estas son las filas vivas del motor de DDD.
+        </p>
+      </div>
+      <button class="btn-secondary btn-sm" (click)="loadBackendCases()" [disabled]="backendCasesLoading()">
+        {{ backendCasesLoading() ? 'Cargando…' : '↻ Refrescar' }}
+      </button>
+    </div>
+
+    @if (backendCasesError()) {
+      <div class="loader-msg loader-err">⚠️ {{ backendCasesError() }}</div>
+    }
+    @if (caseActionError()) {
+      <div class="loader-msg loader-err">⚠️ {{ caseActionError() }}</div>
+    }
+    @if (caseActionInfo()) {
+      <div class="loader-msg loader-ok">✅ {{ caseActionInfo() }}</div>
+    }
+    @if (paymentLinkError()) {
+      <div class="loader-msg loader-err">⚠️ Link de pago: {{ paymentLinkError() }}</div>
+    }
+    @if (paymentLinkResult(); as pl) {
+      <div class="loader-msg loader-ok">
+        ✅ Link enviado — Payment #{{ pl.paymentId }} · {{ pl.channelsDelivered }}/{{ pl.channelsAttempted }} canales ·
+        <a [href]="pl.paymentUrl" target="_blank" rel="noopener noreferrer">Abrir link</a>
+      </div>
+    }
+
+    @if (!backendCasesLoading() && backendCases().length === 0 && !backendCasesError()) {
+      <p class="page-status empty">No hay casos pendientes en el backend.</p>
+    }
+
+    @if (backendCases().length > 0) {
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Obligación</th>
+              <th>Estado</th>
+              <th>Prioridad</th>
+              <th>Asesor</th>
+              <th>Próxima acción</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (bc of backendCases(); track bc.id) {
+              <tr>
+                <td>{{ bc.id }}</td>
+                <td>{{ bc.obligationId }}</td>
+                <td>
+                  <span class="status-chip" style="background:#3b82f622; color:#1d4ed8">
+                    {{ bc.status }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge"
+                        [class.badge-danger]="bc.priority === 'CRITICAL'"
+                        [class.badge-warning]="bc.priority === 'HIGH'"
+                        [class.badge-info]="bc.priority === 'MEDIUM'">{{ bc.priority }}</span>
+                </td>
+                <td>{{ bc.assignedAdvisor ?? '—' }}</td>
+                <td>{{ bc.nextActionAt ?? '—' }}</td>
+                <td class="backend-actions">
+                  <button class="btn-accent btn-sm"
+                          title="Generar y enviar link de pago al cliente"
+                          (click)="sendPaymentLinkForBackendCase(bc.id)"
+                          [disabled]="paymentLinkSending()">
+                    💳 Link
+                  </button>
+                  <button class="btn-primary btn-sm"
+                          title="Marcar como en gestión"
+                          (click)="transitionBackendCase(bc.id, 'IN_MANAGEMENT', 'Transición manual desde UI')"
+                          [disabled]="caseActionLoading() || bc.status === 'IN_MANAGEMENT'">
+                    ▶ En gestión
+                  </button>
+                  <button class="btn-secondary btn-sm"
+                          title="Cerrar el caso"
+                          (click)="closeBackendCase(bc.id)"
+                          [disabled]="caseActionLoading() || bc.status === 'CLOSED'">
+                    ✕ Cerrar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
 </div>

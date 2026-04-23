@@ -113,4 +113,278 @@
     </div>
   </div>
 
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <!-- INTEGRACIÓN REAL CON BACKEND (/api/v1/orchestration, payment)  -->
+  <!-- ─────────────────────────────────────────────────────────────── -->
+  <div class="backend-header">
+    <h3 class="section-title">🔗 Orquestación real (backend)</h3>
+    <p class="section-subtitle">
+      Conectado a <code>/api/v1/orchestration</code>,
+      <code>/api/v1/cases/{{ '{' }}caseId{{ '}' }}/send-payment-link</code> y
+      <code>/api/v1/interactions</code>.
+    </p>
+  </div>
+
+  <div class="backend-grid">
+
+    <!-- ── Panel 1: Envío manual por canal ────────────────────────── -->
+    <div class="card">
+      <h4 class="card-title mb-4">📤 Envío manual (un solo canal)</h4>
+
+      <div class="form-group">
+        <label class="form-label">ID de caso</label>
+        <input type="number" class="form-input" min="1"
+               [ngModel]="sendCaseId()"
+               (ngModelChange)="sendCaseId.set($event)"
+               placeholder="Ej: 101" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Canal</label>
+        <select class="form-select"
+                [ngModel]="sendChannel()"
+                (ngModelChange)="sendChannel.set($event)">
+          @for (ch of channels; track ch) {
+            <option [ngValue]="ch">{{ ch }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Destino (tel / email)</label>
+        <input type="text" class="form-input"
+               [ngModel]="sendDest()"
+               (ngModelChange)="sendDest.set($event)"
+               placeholder="+57 300 123 4567 / cliente@mail.com" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Plantilla / mensaje</label>
+        <textarea class="form-input" rows="3"
+                  [ngModel]="sendTemplate()"
+                  (ngModelChange)="sendTemplate.set($event)"
+                  placeholder="Hola {{ '{{' }}nombre{{ '}}' }}, tu pago está pendiente…"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" (click)="sendManual()" [disabled]="sendLoading()">
+          @if (sendLoading()) { Enviando… } @else { Enviar mensaje }
+        </button>
+      </div>
+
+      @if (sendError()) {
+        <p class="error-msg">⚠ {{ sendError() }}</p>
+      }
+      @if (lastSent(); as ev) {
+        <div class="result-box">
+          <strong>✓ Ejecución #{{ ev.id }}</strong>
+          <div>Caso {{ ev.casoGestionId }} — {{ ev.canal }} → {{ ev.destino }}</div>
+          <div>Estado: <span class="badge" [class.badge-success]="ev.estado === 'ENVIADO'"
+                                           [class.badge-warning]="ev.estado === 'FALLIDO'">{{ ev.estado }}</span></div>
+        </div>
+      }
+    </div>
+
+    <!-- ── Panel 2: Envío del link de pago (multicanal) ───────────── -->
+    <div class="card">
+      <h4 class="card-title mb-4">💳 Enviar link de pago (multicanal)</h4>
+      <p class="section-subtitle mb-4">
+        Genera el link con la pasarela y lo despacha por los canales consentidos
+        del cliente. Si seleccionas canales explícitos abajo, se usan esos.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">ID de caso</label>
+        <input type="number" class="form-input" min="1"
+               [ngModel]="linkCaseId()"
+               (ngModelChange)="linkCaseId.set($event)"
+               placeholder="Ej: 101" />
+      </div>
+
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label class="form-label">Método (opcional)</label>
+          <select class="form-select"
+                  [ngModel]="linkMethod()"
+                  (ngModelChange)="linkMethod.set($event)">
+            <option [ngValue]="null">— default (PSE) —</option>
+            @for (m of paymentMethods; track m) {
+              <option [ngValue]="m">{{ m }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monto (opcional)</label>
+          <input type="number" class="form-input" min="0" step="0.01"
+                 [ngModel]="linkAmount()"
+                 (ngModelChange)="linkAmount.set($event)"
+                 placeholder="Deja vacío para usar saldo total" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Canales (opcional — dejá vacío para los consentidos)</label>
+        <div class="channel-chips">
+          @for (ch of channels; track ch) {
+            <button type="button"
+                    class="chip"
+                    [class.chip-active]="linkChannels().includes(ch)"
+                    [disabled]="ch === 'VOICE'"
+                    [title]="ch === 'VOICE' ? 'VOICE no tiene plantilla de link de pago' : ''"
+                    (click)="toggleLinkChannel(ch)">
+              {{ ch }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-accent" (click)="sendPaymentLink()" [disabled]="linkLoading()">
+          @if (linkLoading()) { Enviando link… } @else { 🚀 Enviar link de pago }
+        </button>
+      </div>
+
+      @if (linkError()) {
+        <p class="error-msg">⚠ {{ linkError() }}</p>
+      }
+      @if (lastLinkResponse(); as resp) {
+        <div class="result-box">
+          <strong>✓ Link generado (Payment #{{ resp.paymentId }})</strong>
+          <div class="result-url">
+            <a [href]="resp.paymentUrl" target="_blank" rel="noopener noreferrer">{{ resp.paymentUrl }}</a>
+          </div>
+          <div>
+            <span class="badge badge-info">{{ resp.channelsDelivered }}/{{ resp.channelsAttempted }} canales entregados</span>
+          </div>
+          @if (resp.dispatches?.length) {
+            <ul class="dispatch-list">
+              @for (d of resp.dispatches; track $index) {
+                <li>
+                  <span class="badge"
+                        [class.badge-success]="d.delivered"
+                        [class.badge-warning]="!d.delivered && d.destination"
+                        [class.badge-info]="!d.delivered && !d.destination">
+                    {{ d.delivered ? 'DELIVERED' : (d.destination ? 'FAILED' : 'SKIPPED') }}
+                  </span>
+                  <span>{{ d.channel }} → {{ d.destination ?? '—' }}</span>
+                  @if (d.reason) { <em class="dispatch-reason">({{ d.reason }})</em> }
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+
+  </div>
+
+  <!-- ── Panel 3: Lookup de ejecuciones + interacciones por caso ── -->
+  <div class="card">
+    <div class="lookup-header">
+      <h4 class="card-title">🔍 Historial del caso</h4>
+      <div class="lookup-controls">
+        <input type="number" class="form-input" min="1"
+               [ngModel]="lookupCaseId()"
+               (ngModelChange)="lookupCaseId.set($event)"
+               placeholder="ID de caso" />
+        <button class="btn-primary" (click)="lookupByCase()" [disabled]="lookupLoading()">
+          @if (lookupLoading()) { Buscando… } @else { Buscar }
+        </button>
+      </div>
+    </div>
+
+    @if (lookupError()) {
+      <p class="error-msg">⚠ {{ lookupError() }}</p>
+    }
+
+    @if (executions().length || interactionsList().length) {
+      <div class="kpi-row">
+        <div class="kpi">
+          <span class="kpi-lbl">Ejecuciones</span>
+          <span class="kpi-val">{{ executions().length }}</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-lbl">Entregadas</span>
+          <span class="kpi-val kpi-ok">{{ executionsDeliveredCount() }}</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-lbl">Fallidas</span>
+          <span class="kpi-val kpi-err">{{ executionsFailedCount() }}</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-lbl">Interacciones</span>
+          <span class="kpi-val">{{ interactionsList().length }}</span>
+        </div>
+      </div>
+    }
+
+    @if (executions().length) {
+      <h5 class="subhead">Ejecuciones de orquestación</h5>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Canal</th>
+              <th>Destino</th>
+              <th>Plantilla</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ex of executions(); track ex.id) {
+              <tr>
+                <td>{{ ex.id }}</td>
+                <td>{{ ex.canal }}</td>
+                <td>{{ ex.destino }}</td>
+                <td class="truncate">{{ ex.plantilla }}</td>
+                <td>
+                  <span class="badge"
+                        [class.badge-success]="ex.estado === 'ENVIADO'"
+                        [class.badge-warning]="ex.estado === 'FALLIDO'">{{ ex.estado }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (interactionsList().length) {
+      <h5 class="subhead">Interacciones con el cliente</h5>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Canal</th>
+              <th>Creada</th>
+              <th>Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (it of interactionsList(); track it.id) {
+              <tr>
+                <td>{{ it.id }}</td>
+                <td>{{ it.channel }}</td>
+                <td>{{ it.createdAt }}</td>
+                <td>
+                  <span class="badge"
+                        [class.badge-success]="it.result === 'DELIVERED' || it.result === 'READ' || it.result === 'ANSWERED'"
+                        [class.badge-warning]="it.result === 'FAILED' || it.result === 'NO_CONTACT'">
+                    {{ it.result }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (!executions().length && !interactionsList().length && !lookupLoading() && !lookupError()) {
+      <p class="empty-state">Busca un caso para ver sus ejecuciones e interacciones.</p>
+    }
+  </div>
+
 </div>

@@ -1,21 +1,29 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import {
+  ADMIN_AND_AUDITOR,
+  ALL_ROLES,
+  NON_AGENT_ROLES,
+} from './core/auth/roles';
 
 /**
- * Matriz de permisos por módulo (fuente: settings.component.ts)
+ * Matriz de permisos por módulo.
  *
  * Módulo          | ADMINISTRADOR | SUPERVISOR | AGENTE | AUDITOR
  * --------------- | ------------- | ---------- | ------ | -------
- * Dashboard       | full          | full       | full   | read    → todos
- * Integración     | full          | read       | none   | read    → sin AGENTE
- * Analítica       | full          | full       | none   | read    → sin AGENTE
- * Políticas       | full          | read       | none   | read    → sin AGENTE
- * Orquestación    | full          | full       | none   | read    → sin AGENTE
- * Gestión Casos   | full          | full       | full   | read    → todos
- * Recaudo         | full          | full       | full   | read    → todos
- * Reportes        | full          | full       | read   | full    → todos
- * Configuración   | full          | none       | none   | read    → ADMIN y AUDITOR
+ * Dashboard       | full          | full       | full   | read    → ALL_ROLES
+ * Integración     | full          | read       | none   | read    → NON_AGENT_ROLES
+ * Analítica       | full          | full       | none   | read    → NON_AGENT_ROLES
+ * Políticas       | full          | read       | none   | read    → NON_AGENT_ROLES
+ * Orquestación    | full          | full       | none   | read    → NON_AGENT_ROLES
+ * Gestión Casos   | full          | full       | full   | read    → ALL_ROLES
+ * Recaudo         | full          | full       | full   | read    → ALL_ROLES
+ * Reportes        | full          | full       | read   | full    → ALL_ROLES
+ * Configuración   | full          | none       | none   | read    → ADMIN_AND_AUDITOR
+ *
+ * Nota: ADMINISTRADOR está presente en TODAS las listas. Usar las constantes
+ * de `core/auth/roles.ts` en lugar de literales para no introducir drift.
  */
 export const routes: Routes = [
   // ── Pública ──────────────────────────────────────────────────────────────
@@ -48,6 +56,8 @@ export const routes: Routes = [
       // Dashboard – todos los roles
       {
         path: 'dashboard',
+        canActivate: [roleGuard],
+        data: { roles: [...ALL_ROLES] },
         loadComponent: () =>
           import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
@@ -56,7 +66,7 @@ export const routes: Routes = [
       {
         path: 'integracion',
         canActivate: [roleGuard],
-        data: { roles: ['ADMINISTRATOR', 'SUPERVISOR', 'AUDITOR', 'ADMIN'] },
+        data: { roles: [...NON_AGENT_ROLES] },
         loadComponent: () =>
           import('./features/integration/integration.component').then(m => m.IntegrationComponent)
       },
@@ -65,7 +75,7 @@ export const routes: Routes = [
       {
         path: 'analitica',
         canActivate: [roleGuard],
-        data: { roles: ['ADMINISTRADOR', 'SUPERVISOR', 'AUDITOR'] },
+        data: { roles: [...NON_AGENT_ROLES] },
         loadComponent: () =>
           import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent)
       },
@@ -74,7 +84,7 @@ export const routes: Routes = [
       {
         path: 'politicas',
         canActivate: [roleGuard],
-        data: { roles: ['ADMINISTRADOR', 'SUPERVISOR', 'AUDITOR'] },
+        data: { roles: [...NON_AGENT_ROLES] },
         loadComponent: () =>
           import('./features/policies/policies.component').then(m => m.PoliciesComponent)
       },
@@ -83,7 +93,7 @@ export const routes: Routes = [
       {
         path: 'orquestacion',
         canActivate: [roleGuard],
-        data: { roles: ['ADMINISTRADOR', 'SUPERVISOR', 'AUDITOR'] },
+        data: { roles: [...NON_AGENT_ROLES] },
         loadComponent: () =>
           import('./features/orchestration/orchestration.component').then(m => m.OrchestrationComponent)
       },
@@ -91,6 +101,8 @@ export const routes: Routes = [
       // M5 Gestión de Casos – todos los roles
       {
         path: 'gestion-casos',
+        canActivate: [roleGuard],
+        data: { roles: [...ALL_ROLES] },
         loadComponent: () =>
           import('./features/case-management/case-management.component').then(m => m.CaseManagementComponent)
       },
@@ -98,6 +110,8 @@ export const routes: Routes = [
       // M6 Recaudo – todos los roles
       {
         path: 'recaudo',
+        canActivate: [roleGuard],
+        data: { roles: [...ALL_ROLES] },
         loadComponent: () =>
           import('./features/recaudo/recaudo.component').then(m => m.RecaudoComponent)
       },
@@ -105,6 +119,8 @@ export const routes: Routes = [
       // M7 Reportes – todos los roles
       {
         path: 'reporting',
+        canActivate: [roleGuard],
+        data: { roles: [...ALL_ROLES] },
         loadComponent: () =>
           import('./features/reporting/reporting.component').then(m => m.ReportingComponent)
       },
@@ -113,7 +129,7 @@ export const routes: Routes = [
       {
         path: 'configuracion',
         canActivate: [roleGuard],
-        data: { roles: ['ADMINISTRADOR', 'AUDITOR'] },
+        data: { roles: [...ADMIN_AND_AUDITOR] },
         loadComponent: () =>
           import('./features/settings/settings.component').then(m => m.SettingsComponent)
       }

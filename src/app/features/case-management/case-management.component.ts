@@ -8,9 +8,21 @@ import { catchError, map } from 'rxjs/operators';
 import { StoreService } from '../../core/services/store.service';
 import { ClientService } from '../../core/services/client.service';
 import { ObligationService } from '../../core/services/obligation.service';
+import { CaseService } from '../../core/services/case.service';
+import { OrchestrationService } from '../../core/services/orchestration.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DOCUMENT_TYPES, DocumentType, ClientResponse } from '../../core/models/client.model';
 import { ObligationResponse } from '../../core/models/obligation.model';
+import {
+  CASE_PRIORITIES,
+  CasePriority,
+  CaseResponse,
+  CaseStatus as BackendCaseStatus,
+  CreateCaseRequest,
+  TransitionCaseStatusRequest,
+} from '../../core/models/case.model';
+import { SendPaymentLinkResponse } from '../../core/models/orchestration.model';
+import { ROLES } from '../../core/auth/roles';
 
 @Component({
   selector: 'app-case-management',
@@ -20,9 +32,11 @@ import { ObligationResponse } from '../../core/models/obligation.model';
 })
 export class CaseManagementComponent implements OnInit {
   store = inject(StoreService);
-  private readonly clients     = inject(ClientService);
-  private readonly obligations = inject(ObligationService);
-  private readonly auth        = inject(AuthService);
+  private readonly clients       = inject(ClientService);
+  private readonly obligations   = inject(ObligationService);
+  private readonly caseService   = inject(CaseService);
+  private readonly orchestration = inject(OrchestrationService);
+  private readonly auth          = inject(AuthService);
 
   // ── Estado del detalle ────────────────────────────────────────────────
   selectedCaseId  = signal<string | null>(null);
@@ -74,8 +88,9 @@ export class CaseManagementComponent implements OnInit {
   });
 
   /**
-   * Rol actual tomado del AuthService (al backend le llegan en mayúsculas
-   * ej. "ADMINISTRADOR"). Mapeamos a la etiqueta usada por la UI demo.
+   * Rol actual tomado del AuthService (el backend los emite en MAYÚSCULAS
+   * dentro del JWT; ADMINISTRATOR viene en inglés, los demás en español).
+   * Mapeamos a la etiqueta usada por la UI demo.
    */
   readonly currentRole = computed<'Administrador' | 'Supervisor' | 'Agente' | 'Auditor'>(() => {
     const r = this.auth.currentRole();
@@ -120,9 +135,176 @@ export class CaseManagementComponent implements OnInit {
   readonly gestionCount  = computed(() => this.casesInPage().filter(c => c.status === 'ST-002').length);
   readonly desbordeCount = computed(() => this.casesInPage().filter(c => c.desbordeIA).length);
 
+  // ── Integración directa con /api/v1/cases ────────────────────────────
+  /** Casos pendientes reales traídos del backend (CaseController#listPending). */
+  readonly backendCases = signal<CaseResponse[]>([]);
+  readonly backendCasesLoading = signal(false);
+  readonly backendCasesError   = signal('');
+
+  /** Canal de feedback del envío de link de pago (último intento). */
+  readonly paymentLinkSending = signal(false);
+  readonly paymentLinkResult  = signal<SendPaymentLinkResponse | null>(null);
+  readonly paymentLinkError   = signal('');
+
+  /** Feedback del último cambio de estado / cierre. */
+  readonly caseActionLoading = signal(false);
+  readonly caseActionError   = signal('');
+  readonly caseActionInfo    = signal('');
+
+  // ── Creación de casos reales (POST /api/v1/cases) ────────────────────
+  /**
+   * Obligaciones descubiertas (por loader o paginación) disponibles para
+   * elegir en el formulario de creación. Dedupe por id.
+   */
+  readonly loadedObligations = signal<ObligationResponse[]>([]);
+  readonly createObligationId = signal<number | null>(null);
+  readonly createPriority     = signal<CasePriority>('MEDIUM');
+  readonly caseCreateLoading  = signal(false);
+  readonly casePriorities     = CASE_PRIORITIES;
+
   // ── Carga inicial / paginación ────────────────────────────────────────
   ngOnInit(): void {
     this.loadPage(0);
+    this.loadBackendCases();
+  }
+
+  /** Recarga los casos pendientes desde el backend. */
+  loadBackendCases(): void {
+    this.backendCasesLoading.set(true);
+    this.backendCasesError.set('');
+    this.caseService.listPending().subscribe({
+      next: (cases) => {
+        this.backendCases.set(cases);
+        this.backendCasesLoading.set(false);
+      },
+      error: (err) => {
+        this.backendCasesLoading.set(false);
+        this.backendCasesError.set(this.errorMessage(err));
+      },
+    });
+  }
+
+  /**
+   * Dispara una transición de estado en el backend. Al completarse se
+   * recargan los casos pendientes para reflejar el nuevo estado.
+   */
+  transitionBackendCase(caseId: number, targetStatus: BackendCaseStatus, reason: string): void {
+    this.caseActionLoading.set(true);
+    this.caseActionError.set('');
+    this.caseActionInfo.set('');
+
+    const request: TransitionCaseStatusRequest = {
+      caseId,
+      targetStatus,
+      reason,
+      performedBy: this.auth.username() ?? 'ui',
+      performedByRole: this.auth.currentRole() ?? ROLES.ADMINISTRADOR,
+      source: 'UI',
+      correlationId: `ui-${Date.now()}`,
+    };
+
+    this.caseService.transitionStatus(request).subscribe({
+      next: (updated) => {
+        this.caseActionLoading.set(false);
+        this.caseActionInfo.set(`Caso ${updated.id} → ${updated.status}`);
+        this.loadBackendCases();
+      },
+      error: (err) => {
+        this.caseActionLoading.set(false);
+        this.caseActionError.set(this.errorMessage(err));
+      },
+    });
+  }
+
+  /** Cierra un caso del backend y refresca la lista. */
+  closeBackendCase(caseId: number): void {
+    this.caseActionLoading.set(true);
+    this.caseActionError.set('');
+    this.caseActionInfo.set('');
+
+    this.caseService.close(caseId).subscribe({
+      next: (updated) => {
+        this.caseActionLoading.set(false);
+        this.caseActionInfo.set(`Caso ${updated.id} cerrado.`);
+        this.loadBackendCases();
+      },
+      error: (err) => {
+        this.caseActionLoading.set(false);
+        this.caseActionError.set(this.errorMessage(err));
+      },
+    });
+  }
+
+  /**
+   * Crea un caso real en el backend a partir de la obligación seleccionada.
+   * Al responder, refresca la lista de pendientes para que aparezca arriba.
+   */
+  createBackendCase(): void {
+    const oblId = this.createObligationId();
+    if (oblId == null || oblId <= 0) {
+      this.caseActionError.set('Debes indicar el ID de la obligación.');
+      this.caseActionInfo.set('');
+      return;
+    }
+
+    this.caseCreateLoading.set(true);
+    this.caseActionLoading.set(true);
+    this.caseActionError.set('');
+    this.caseActionInfo.set('');
+
+    const request: CreateCaseRequest = {
+      obligationId: oblId,
+      priority: this.createPriority(),
+    };
+
+    this.caseService.create(request).subscribe({
+      next: (created) => {
+        this.caseCreateLoading.set(false);
+        this.caseActionLoading.set(false);
+        this.caseActionInfo.set(
+          `Caso #${created.id} creado para obligación ${created.obligationId} (prioridad ${created.priority}).`
+        );
+        this.createObligationId.set(null);
+        this.loadBackendCases();
+      },
+      error: (err) => {
+        this.caseCreateLoading.set(false);
+        this.caseActionLoading.set(false);
+        this.caseActionError.set(this.errorMessage(err));
+      },
+    });
+  }
+
+  /** Inserta/actualiza obligaciones en `loadedObligations` deduplicando por id. */
+  private mergeLoadedObligations(obls: ObligationResponse[]): void {
+    if (!obls?.length) return;
+    this.loadedObligations.update((existing) => {
+      const byId = new Map<number, ObligationResponse>();
+      for (const o of existing) byId.set(o.id, o);
+      for (const o of obls)     byId.set(o.id, o);
+      return Array.from(byId.values()).sort((a, b) => a.id - b.id);
+    });
+  }
+
+  /**
+   * Genera el link de pago para el caso y lo envía por los canales consentidos
+   * del cliente. El backend devuelve el resumen multicanal.
+   */
+  sendPaymentLinkForBackendCase(caseId: number): void {
+    this.paymentLinkSending.set(true);
+    this.paymentLinkError.set('');
+    this.paymentLinkResult.set(null);
+
+    this.orchestration.sendPaymentLink(caseId).subscribe({
+      next: (resp) => {
+        this.paymentLinkSending.set(false);
+        this.paymentLinkResult.set(resp);
+      },
+      error: (err) => {
+        this.paymentLinkSending.set(false);
+        this.paymentLinkError.set(this.errorMessage(err));
+      },
+    });
   }
 
   loadPage(page: number): void {
@@ -142,9 +324,17 @@ export class CaseManagementComponent implements OnInit {
         }
 
         // Por cada cliente de la página, intenta traer sus obligaciones en paralelo.
+        // Si una falla marcamos el flag y seguimos (no queremos perder toda la página
+        // por un 403/500 aislado), pero dejamos constancia al usuario.
+        let oblFailures = 0;
+        let lastOblError = '';
         const withObls$ = resp.content.map(client =>
           this.obligations.listByClient(client.id).pipe(
-            catchError(() => of([] as ObligationResponse[])),
+            catchError((err) => {
+              oblFailures++;
+              lastOblError = this.errorMessage(err);
+              return of([] as ObligationResponse[]);
+            }),
             map(obls => ({ client, obls })),
           )
         );
@@ -152,12 +342,20 @@ export class CaseManagementComponent implements OnInit {
         forkJoin(withObls$).subscribe({
           next: (rows) => {
             const ids = new Set<string>();
+            const allObls: ObligationResponse[] = [];
             for (const { client, obls } of rows) {
               const { caseItem } = this.store.upsertAssociateFromBackend(client, obls);
               ids.add(caseItem.id);
+              allObls.push(...obls);
             }
             this.currentPageCaseIds.set(ids);
+            this.mergeLoadedObligations(allObls);
             this.pageLoading.set(false);
+            if (oblFailures > 0) {
+              this.pageError.set(
+                `No se pudieron cargar las obligaciones de ${oblFailures} cliente(s). ${lastOblError}`
+              );
+            }
           },
           error: () => {
             // Si falla forkJoin, al menos inserta los clientes sin obligaciones.
@@ -258,7 +456,10 @@ export class CaseManagementComponent implements OnInit {
   /** Segundo paso: lee las obligaciones del cliente y hace upsert en la store. */
   private fetchObligationsAndCommit(clientId: number, client: ClientResponse): void {
     this.obligations.listByClient(clientId).subscribe({
-      next: (obls) => this.commitLoadedClient(client, obls, obls.length),
+      next: (obls) => {
+        this.mergeLoadedObligations(obls);
+        this.commitLoadedClient(client, obls, obls.length);
+      },
       error: (err) => {
         // Si falla el listado, al menos ingresa el cliente sin obligaciones.
         this.commitLoadedClient(client, [], 0, this.errorMessage(err));

@@ -644,3 +644,85 @@ tr.selected td { background: rgba(16,152,155,0.05); }
     min-height: 36px;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────── */
+/* Panel de casos reales (backend)                                 */
+/* ─────────────────────────────────────────────────────────────── */
+.backend-card { margin-top: 1.5rem; }
+
+.backend-card .collapse-trigger { cursor: default; }
+
+.backend-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.backend-actions .btn-sm { white-space: nowrap; }
+
+.badge-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.badge-info {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* ── Panel de creación de caso (POST /api/v1/cases) ──────────────── */
+.create-case-card { margin-top: 1.5rem; }
+
+.create-case-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 0.75rem 1rem;
+  align-items: end;
+  margin-top: 0.5rem;
+}
+
+.cc-field { display: flex; flex-direction: column; gap: 4px; }
+
+.cc-field .form-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cc-field .form-select,
+.cc-field .form-input {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+  min-height: 34px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  width: 100%;
+}
+
+.cc-field .form-select:focus,
+.cc-field .form-input:focus {
+  outline: none;
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgba(16,152,155,0.12);
+}
+
+.cc-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cc-actions .btn-accent {
+  padding: 0.45rem 1rem;
+  min-height: 34px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .create-case-form {
+    grid-template-columns: 1fr;
+  }
+  .cc-actions { justify-content: stretch; }
+  .cc-actions .btn-accent { width: 100%; }
+}
